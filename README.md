@@ -1,29 +1,13 @@
-# README #
+# Auroral adapter module for NODE-RED #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+## Development installation ##
+Described in: https://nodered.org/docs/creating-nodes/first-node
+in part **Testing your node in Node-RED**
 
-### What is this repository for? ###
+### Node-red docs ###
+https://nodered.org/docs/
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
-### How do I get set up? ###
-
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+## Known limitations and bugs ##
+- not all errors are properly handled
+- changing PIDS after node is once deployed is not possible (you have to remove and recreate)

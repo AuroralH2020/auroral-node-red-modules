@@ -1,0 +1,28 @@
+<script type="text/javascript">
+    RED.nodes.registerType('auroralResponse',{
+        category: 'Auroral',
+        color: '#3FADB5',
+        align: 'right',
+        defaults: {
+            name: { value: ""} ,
+            agent: { value: "" },
+            pids: { value: "PID1" },
+        },
+        inputs:1,
+        icon: "auroral.png",
+        label: function() {
+            return this.name || "auroralResponse";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="auroralResponse">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="auroralResponse name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="auroralResponse">
+    <p>Send answer back to AURORAL agent</p>
+</script>

@@ -1,0 +1,31 @@
+<script type="text/javascript">
+    RED.nodes.registerType('registrations',{
+        category: 'Auroral',
+        color: '#3FADB5',
+        defaults: {
+            name: { value:""} ,
+            agent: { value:"" },
+            pids: { value:"PID1" },
+            agent: { value:"", type:"auroral-agent" },
+        },
+        inputs:1,
+        outputs:1,
+        icon: "auroral.png",
+        label: function() {
+            return this.name || "registrations";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="registrations">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="registrations name">
+        <label for="agent-url"><i class="fa fa-plug"></i> Auroral agent</label>
+        <input id="node-input-agent" >
+    </div>
+</script>
+
+<script type="text/html" data-help-name="registrations">
+    <p>Get registartions from Auroral Agent</p>
+</script>

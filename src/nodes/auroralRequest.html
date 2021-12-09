@@ -1,0 +1,74 @@
+<script type="text/javascript">
+
+    RED.nodes.registerType('auroralRequest',{
+        category: 'Auroral',
+        color: '#3FADB5',
+        defaults: {
+            name: { value: "", required: true },
+            objectId: { value: "", required: true },
+            pids: { value:"", required: true },
+            agent: { value:"", type:"auroral-agent", required: true },
+            outputs: { value: 1 },
+        },
+        outputLabels: function(index) {
+            try {
+                const pids = JSON.parse(this.pids)
+                if(pids.length > index){
+                    return pids[index];
+                }
+                return "unknown"
+            } catch (error) {
+                return "unknown"
+                
+            }
+        },
+        oneditprepare: function (){
+            var node = this;
+            $("#node-input-pids").typedInput({
+                type:"json",
+                types:["json"]
+            })
+        },
+        oneditsave: function () {
+            var node = this;
+            try {
+                const pidString = $("#node-input-pids").val()
+                const pids = JSON.parse(pidString)
+                node.outputs = pids.length
+            } catch (error) {
+                console.log(error)
+                node.outputs = 0
+            }
+        },
+        outputs: 1,
+        icon: "auroral.png",
+        label: function() {
+            return this.name || "auroralRequest";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="auroralRequest">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-cube"></i> Name:</label>
+        <input type="text" id="node-input-name" placeholder="Device123">
+    </div>
+    <div class="form-row">
+        <label for="node-input-objectId"><i class="fa fa-cube"></i> Object id:</label>
+        <input type="text" id="node-input-objectId" placeholder="custom object ID">
+    </div>
+    <div class="form-row">
+        <label for="node-input-pids"><i class="fa fa-cubes"></i> PIDS:</label>
+        <input type="text" id="node-input-pids" placeholder='["PID1", "PID2"]'>
+        <input type="hidden" id="node-input-pids-type">
+        
+    </div>
+    <div class="form-row">
+        <label for="agent-url"><i class="fa fa-plug"></i> Agent:</label>
+        <input id="node-input-agent" >
+    </div>
+</script>
+
+<script type="text/html" data-help-name="auroralRequest">
+    <p>Get data requests from auroral agent</p>
+</script>

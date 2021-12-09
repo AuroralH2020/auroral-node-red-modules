@@ -1,0 +1,16 @@
+{
+    "name": "node-red-contrib-auroral",
+    "node-red": {
+        "nodes": {
+            "registrations": "./src/nodes/registrations.js",
+            "auroral-agent": "./src/nodes/auroral-agent.js",
+            "auroralResponse": "./src/nodes/auroralResponse.js",
+            "auroralRequest": "./src/nodes/auroralRequest.js"
+        }
+    },
+    "dependencies": {
+        "got": "^11.8.3",
+        "stoppable": "^1.1.0",
+        "uuid": "^8.3.2"
+    }
+}
