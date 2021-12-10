@@ -1,9 +1,9 @@
 module.exports = function(RED) {
     function AuroralAgentNode(n) {
+        RED.nodes.createNode(this,n);
         var http = require('http');
         var uuid = require('uuid');
         var stoppable = require('stoppable');
-        RED.nodes.createNode(this,n);
         const node = this
 
         // settings
@@ -19,47 +19,55 @@ module.exports = function(RED) {
         // get registrations
         (async function() {
             try{
-                const registrations = JSON.parse(await getAgent(node, '/admin/registrations'))
-                if(!registrations){
-                    node.error('Can not connect to agent')
+                const registrationsResponse = await getAgent(node, '/admin/registrations')
+                if(!registrationsResponse){
+                    node.error('Agent is offline')
                     return
                 }
+                const registrations = JSON.parse(registrationsResponse)
+
+                //get registrationData with pids and adapterId
                 node.agentData = await Promise.all(registrations.map(async (reg) => {
                     var returnObj = JSON.parse(await getAgent(node, '/admin/registrations/' + reg))
-                    
                     returnObj.oid = reg
                     return returnObj
                 }));
-                // node.log('Waiting 1 second')
-                await new Promise(r => setTimeout(r, 1000));
+                // waiting 300 milisecond to gather all register calls from nodes
+                await new Promise(r => setTimeout(r, 300));
                 for (const device of node.devices) {
                     const oid = getOid(node,device.objectId)
                     if(oid == undefined){
-                        node.log('Registering '+ device.name )
-                        //register 
+                        //registering new device
                         const data = {
                             name: device.name,
                             adapterId: device.objectId,
                             properties: device.pids,
                             type: 'Device'
                         };
+                        //send request
                         const response = (await postAgent(node, '/api/registration/', data))[0];
+
                         if(response) {
-                            node.log('Registered '+ device.name + ' ' + response.oid)
+                            // emit message to node and store OID
+                            node.log('Device: '+ device.name + ' - now registered [' + response.oid +']')
+                            device.node.emit('registered');
                             device.registered = true
                             device.oid = response.oid
                         }
                         else{
-                            node.error('Device was not registered')
+                            // registration error
+                            node.log('Device: '+ device.name + ' - was not  registered ')
                         }
                     } else {
-                        node.log('Device: '+ device.name + '\t - already registered [' + oid +']')
+                        // device is already registered - emit to node
+                        node.log('Device: '+ device.name + ' - already registered [' + oid +']')
                         device.oid = oid;
                         device.registered = true
                         device.node.emit('registered');
                     }
                 }
             } catch (error){
+                // unexpected error
                 node.error('Fatal error:' + error)
            } 
            })();
@@ -67,61 +75,81 @@ module.exports = function(RED) {
         // init server
         this.httpServer = stoppable(http.createServer(function (req, res) {
             const url = req.url.split('/')
-            if( url.length<3 ){
+            // proper url test '/property/api/:oid/:pid
+            if( url.length < 5 || url[1] != 'api' || url[2] != 'property'){
                 // Error
-                node.error('Bad params')
+                node.error('Bad params: '+ url)
                 res.writeHead(400, {'Content-Type': 'application/json'});
                 res.write(JSON.stringify({'err': "Bad request"}));
                 res.end();
                 return
             }
-            const reqOid = url[1]
-            const reqPid = url[2]
+            // get OID and PID from request
+            const reqOid = url[3]
+            const reqPid = url[4]
             var targetDevice = undefined
+            // try to find OID in stored devices
             for (const device of node.devices) {
                 if(device.oid == reqOid && device.pids.includes(reqPid)){
                     targetDevice = device
                 }
             }
-            if(!targetDevice){
-                // Error
-                node.error('OID/PID not found ')
+            // Device not found
+            if(!targetDevice) {
+                node.error('OID/PID not found ['+reqOid + ', ' + reqPid+']')
                 res.writeHead(400, {'Content-Type': 'application/json'});
-                res.write(JSON.stringify({'err': "Combination of OID and PID not found"}));
+                res.write(JSON.stringify({'err': 'Combination of OID and PID not found ['+reqOid + ', ' + reqPid+']'}));
                 res.end();
                 return
             }
             // create record in requests
-            const obj = {
-                req,
-                res,
-            }
-            const objId = uuid.v4()
+            const obj = { req, res }
+            const reqId = uuid.v4()
+
             // store in shared context
             var auroral_requests = (node.context().global).get('auroral_requests') || {}
-            auroral_requests[objId] = obj;
+            auroral_requests[reqId] = obj;
             (node.context().global).set('auroral_requests', auroral_requests)
+
             // send message to request 
-
-            node.log('Asking:' + objId)
-            targetDevice.node.emit('request', {'_auroralReqId': objId, pid: reqPid})
+            node.log('Sending request to node ' + reqId)
+            targetDevice.node.emit('request', {'_auroralReqId': reqId, pid: reqPid})
+            // timeout if request is not answered
+            setTimeout(async function(){
+                // get requests from global storage
+                var auroral_requests = (node.context().global).get('auroral_requests')
+                if(auroral_requests[reqId] !== undefined) {
+                    // request was not answered
+                    node.error('Auroral node-red ' + targetDevice.name + '-' + reqPid + ' does not reach response node in 5 seconds')
+                    const res = auroral_requests[reqId].res
+                    res.writeHead(400, {'Content-Type': 'application/json'});
+                    res.write(JSON.stringify({err: 'Auroral node-red ' + targetDevice.name + ' pid: ' + reqPid + ' does not reach response node in 5 seconds'}));
+                    res.end()
+                     // remove from global variable
+                    delete auroral_requests[reqId];
+                    (node.context().global).set('auroral_requests', auroral_requests)
+                } 
+            }, 5000)
           }));
-        this.httpServer.listen(this.serverPort)
 
+        // start server
+        this.httpServer.listen(this.serverPort)
+        
+        // function for 'request' nodes
         this.on('registerDevice', function(obj) {
             obj.registered = false
             this.devices.push(obj)
-            node.log('Register device:' + obj.objectId)
         });
-
+        // function for unregistering devices after removal
         this.on('unregisterDevice',  async function(id) {
             const got = require('got');
             this.unregisterRequests.push(id)
         });
-
+        // when closing conenction to agent -> unregister removed items
         this.on('close', function(removed, done) {
             this.httpServer.stop()
             node.log('Closig agent connector')
+            // waiting 500ms to get all unregistration requests
             setTimeout(async function(){
                 try {
                     var oids = [];
@@ -130,52 +158,39 @@ module.exports = function(RED) {
                             if(device.objectId == unregisterId){
                                 oids.push(device.oid)
                                 node.log('Unregistering: '+ device.name)
-
                             }
                         }
                     }
-                    if(oids == []){
-                        // node.log('Nothing to unregister')
+                    if(oids.length == 0){
                         done();
                         return
                     }
-                    const got = require('got')
-                    const response = await got.post('http://' + node.host + ':' + node.port + '/api/registration/remove', 
-                    {
-                        json: { oids },
-                    });
+                    // send unregister request
+                    await postAgent(node, '/api/registration/remove', { oids } )
                     } catch (error) {
                         node.error('ERROR')
                         node.error(error)
                     }
                     done();
-                },1000);
+                },500);
         });
         (this.context().global).set('auroral_agent', this);
     }
     RED.nodes.registerType("auroral-agent", AuroralAgentNode);
 }
 
-// return registrations from AGENT
+// get request with given URL, returns body or undefined
 async function getAgent(node, url){
+    const got = require('got');
     try {
-        const http = require('http');
-        const res = await new Promise(resolve => {
-            http.get('http://' + node.host + ':' + node.port + url, resolve);
-        });
-        let data = await new Promise((resolve, reject) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('error', err => reject(err));
-            res.on('end', () => resolve(data));
-            
-        });
-        return data
+        const response = await got.get('http://' + node.host + ':' + node.port + url);
+        return response.body
     } catch (error) {
-        node.error('ERROR')
-        node.error(error)
+        node.error('Error getAgent: ' + error)
+        return undefined
     }
 }
+// function returns oid from adapterId (called id)
 function getOid(node, id){
     for (const agentDevice of node.agentData) {
         if(agentDevice.adapterId != undefined && agentDevice.adapterId == id ){
@@ -185,6 +200,7 @@ function getOid(node, id){
     return undefined
 }
 
+// post request with given URL and objData, returns body or undefined
 async function postAgent(node, url, objData){
         const got = require('got');
         try {
@@ -195,9 +211,7 @@ async function postAgent(node, url, objData){
             });
             return response.body
         } catch (error) {
-            node.error('ERROR')
-            node.error(error)
-            return
+            node.error('Error postAgent: ' + error)
+            return undefined
         }
-        
 }

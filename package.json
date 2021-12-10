@@ -1,5 +1,6 @@
 {
     "name": "node-red-contrib-auroral",
+    "version":  "1.0.1",
     "node-red": {
         "nodes": {
             "registrations": "./src/nodes/registrations.js",

@@ -1,56 +1,35 @@
 module.exports = function(RED) {
     function Registrations(config) {
         RED.nodes.createNode(this,config);
+        this.agent = RED.nodes.getNode(config.agent);
         const node = this
+
+        // incoming message
         this.on('input', function(msg, send, done) {
-
-            var http = require('http');
-            this.agent = RED.nodes.getNode(config.agent);
-            // test if properly filled agent
-            if(this.agent == undefined){
-                this.status({fill:"red",shape:"ring",text:"disconnected"});
-            }
             try {
-                http.get('http://' + this.agent.host + ':' + this.agent.port+ '/api/registration', res => {
-                let data = [];
-                const headerDate = res.headers && res.headers.date ? res.headers.date : 'no response date';
-                if(res.statusCode!==200){
-                    this.error("Auroral status code: " + res.statusCode);
-                }
-                res.on('data', chunk => {
-                    data.push(chunk);
-                });
-
-                res.on('end', () => {
-                    const registrations = JSON.parse(Buffer.concat(data).toString());
-                    this.log('Auroral response: '+ registrations);
-                    msg.payload = registrations
-                    this.status({fill:"green",shape:"dot",text:"connected"});
-                    send(msg)
-                });
-                }).on('error', err => {
-                    this.error('HTTP error: '+ err.message);
-                    this.status({fill:"red",shape:"ring",text:"disconnected"});
-                    done()
-                });
-                
+                (async function() {
+                    const registrations = await getAgent(node, '/api/registration')
+                    if(registrations){
+                        send({payload: JSON.parse(registrations)})
+                    }
+                })();
             } catch (error) {
-                this.error('ERROR')
+                this.error('ERROR:' + error)
                 done();
             }
         });
-
-        this.on('close', function(removed, done) {
-            if (removed) {
-                // This node has been disabled/deleted
-            } else {
-                // This node is being restarted
-            }
-            done();
-        });
-        
-        
-        
     }
     RED.nodes.registerType("registrations",Registrations);
+}
+
+// get request with given URL, returns body or undefined
+async function getAgent(node, url){
+    const got = require('got');
+    try {
+        const response = await got.get('http://' + node.agent.host + ':' + node.agent.port + url);
+        return response.body
+    } catch (error) {
+        node.error('Error getAgent: ' + error)
+        return undefined
+    }
 }

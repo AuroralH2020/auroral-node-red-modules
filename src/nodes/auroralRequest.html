@@ -6,24 +6,26 @@
         defaults: {
             name: { value: "", required: true },
             objectId: { value: "", required: true },
-            pids: { value:"", required: true },
-            agent: { value:"", type:"auroral-agent", required: true },
+            pids: { value: "", required: true },
+            agent: { value: "", type:"auroral-agent", required: true },
             outputs: { value: 1 },
         },
         outputLabels: function(index) {
             try {
+                // try to parse PIDS
                 const pids = JSON.parse(this.pids)
                 if(pids.length > index){
+                    // return proper PID
                     return pids[index];
                 }
                 return "unknown"
             } catch (error) {
                 return "unknown"
-                
             }
         },
         oneditprepare: function (){
             var node = this;
+            // for JSON input type
             $("#node-input-pids").typedInput({
                 type:"json",
                 types:["json"]
@@ -32,6 +34,7 @@
         oneditsave: function () {
             var node = this;
             try {
+                // create proper number of outputs
                 const pidString = $("#node-input-pids").val()
                 const pids = JSON.parse(pidString)
                 node.outputs = pids.length

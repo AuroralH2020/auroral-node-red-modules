@@ -4,10 +4,10 @@
         defaults: {
             host: { value: "localhost",required: true },
             port: { value: 81, required: true, validate: RED.validators.number() },
-            serverPort: { value:1250, required:true, validate:RED.validators.number() },
+            serverPort: { value: 1250, required:true, validate:RED.validators.number() },
         },
         label: function() {
-            return this.host+":"+this.port;
+            return this.host + ":" + this.port;
         }
     });
 </script>
@@ -25,4 +25,8 @@
         <label for="node-config-input-serverPort"><i class="fa fa-bookmark"></i> Server port</label>
         <input type="text" id="node-config-input-serverPort">
     </div>
+</script>
+
+<script type="text/html" data-help-name="auroralResponse">
+    <p>Auroral agent connector for NODE-RED</p>
 </script>
