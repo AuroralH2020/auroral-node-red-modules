@@ -113,7 +113,7 @@ module.exports = function(RED) {
 
             // send message to request 
             node.log('Sending request to node ' + reqId)
-            targetDevice.node.emit('request', {'_auroralReqId': reqId, pid: reqPid})
+            targetDevice.node.emit('request', {'_auroralReqId': reqId, pid: reqPid, oid: reqOid, 'adapterId': targetDevice.objectId})
             // timeout if request is not answered
             setTimeout(async function(){
                 // get requests from global storage
