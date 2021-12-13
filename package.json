@@ -6,7 +6,8 @@
             "registrations": "./src/nodes/registrations.js",
             "auroral-agent": "./src/nodes/auroral-agent.js",
             "auroralResponse": "./src/nodes/auroralResponse.js",
-            "auroralRequest": "./src/nodes/auroralRequest.js"
+            "auroralRequest": "./src/nodes/auroralRequest.js",
+            "auroralDataCollector": "./src/nodes/auroralDataCollector.js"
         }
     },
     "dependencies": {

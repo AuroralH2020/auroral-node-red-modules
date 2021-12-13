@@ -7,7 +7,7 @@ module.exports = function(RED) {
         const node = this
         // get agent node and emit registration event
         this.agentNode = (node.context().global).get('auroral_agent')
-        this.agentNode.emit('registerDevice', { "objectId": config.objectId, "name": config.name, pids,"node": this })
+        this.agentNode.emit('registerDevice', { "objectId": config.objectId, "name": config.name, pids,"node": this }, 'Device')
         // change status for waiting
         this.status({fill:"red",shape:"ring",text:"waiting"});
         // const auroral_objects = (node.context().global).get('auroral_objects');

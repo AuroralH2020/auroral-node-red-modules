@@ -42,7 +42,7 @@ module.exports = function(RED) {
                             name: device.name,
                             adapterId: device.objectId,
                             properties: device.pids,
-                            type: 'Device'
+                            type: device.type
                         };
                         //send request
                         const response = (await postAgent(node, '/api/registration/', data))[0];
@@ -50,7 +50,7 @@ module.exports = function(RED) {
                         if(response) {
                             // emit message to node and store OID
                             node.log('Device: '+ device.name + ' - now registered [' + response.oid +']')
-                            device.node.emit('registered');
+                            device.node.emit('registered', response.oid);
                             device.registered = true
                             device.oid = response.oid
                         }
@@ -63,7 +63,7 @@ module.exports = function(RED) {
                         node.log('Device: '+ device.name + ' - already registered [' + oid +']')
                         device.oid = oid;
                         device.registered = true
-                        device.node.emit('registered');
+                        device.node.emit('registered', oid);
                     }
                 }
             } catch (error){
@@ -136,8 +136,9 @@ module.exports = function(RED) {
         this.httpServer.listen(this.serverPort)
         
         // function for 'request' nodes
-        this.on('registerDevice', function(obj) {
+        this.on('registerDevice', function(obj, type) {
             obj.registered = false
+            obj.type = type
             this.devices.push(obj)
         });
         // function for unregistering devices after removal
