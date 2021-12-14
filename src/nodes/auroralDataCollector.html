@@ -6,7 +6,7 @@
         defaults: {
             name: { value: "", required: true },
             objectId: { value: "", required: true },
-            agent: { value: "", type:"auroral-agent", required: true },
+            agent: { value: "", type: "auroral-agent", required: true },
         },
         outputs: 1,
         inputs: 1,
@@ -23,7 +23,7 @@
         <input type="text" id="node-input-name" placeholder="Device123">
     </div>
     <div class="form-row">
-        <label for="node-input-objectId"><i class="fa fa-cube"></i> Object id:</label>
+        <label for="node-input-objectId"><i class="fa fa-cube"></i> AdapterId:</label>
         <input type="text" id="node-input-objectId" placeholder="custom object ID">
     </div>
     <div class="form-row">
@@ -33,5 +33,34 @@
 </script>
 
 <script type="text/html" data-help-name="auroralDataCollector">
-    <p>Collect data from device in auroral network</p>
+    <p>Collects data from device in auroral network</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>oid
+            <span class="property-type">string</span>
+        </dt>
+        <dd> Object id of Auroral data source device</dd>
+        <dt>pid <span class="property-type">string</span></dt>
+        <dd> Property id of property in requested device</dd>
+    </dl>
+    <h3>Outputs</h3>
+    <ol class="node-ports">
+        <li>Standard output
+            <dl class="message-properties">
+                <dt>payload <span class="property-type">string</span></dt>
+                <dd>Retrieved response from Auroral device</dd>
+            </dl>
+        </li>
+    </ol>
+    <h3>Details</h3>
+    This service is registered in Auroral agent with name and adapterId from it's config.
+    Afterwards, when node is deployed, it is possible to make requests for getting data from devices connected to Auroral network.
+    They are addressable by OID and PID, sent in properities <code>msg.oid</code> and <code>msg.pid</code>.
+    <h3>Notes</h3>
+    <li>You need to enable service in Auroral dashboard before making requests</li>
+    <li>Do not update services after deploying. Remove them and recreate if needed </li>
+<!-- <h3>References</h3>
+    <ul>
+        <li><a>GitHub</a> - the nodes github repository</li>
+    </ul> -->
 </script>

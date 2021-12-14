@@ -57,7 +57,7 @@
         <input type="text" id="node-input-name" placeholder="Device123">
     </div>
     <div class="form-row">
-        <label for="node-input-objectId"><i class="fa fa-cube"></i> Object id:</label>
+        <label for="node-input-objectId"><i class="fa fa-cube"></i> AdapterId:</label>
         <input type="text" id="node-input-objectId" placeholder="custom object ID">
     </div>
     <div class="form-row">
@@ -73,5 +73,38 @@
 </script>
 
 <script type="text/html" data-help-name="auroralRequest">
-    <p>Get data requests from auroral agent</p>
+    <p>Allows to share data in auroral network</p>
+    <h3>Outputs</h3>
+    <ol class="node-ports">
+        This node has multiple outputs, named by PIDs. When data are requested from registered device, proper PID output is trigered.
+        Each sent message represents data request and contains these properities:
+        <dl class="message-properties">
+            <dt>msg.oid <span class="property-type">string</span></dt>
+            <dd>OID of requested device</dd>
+        </dl>
+        <dl class="message-properties">
+            <dt>msg.pid <span class="property-type">string</span></dt>
+            <dd>Property ID of requested device</dd>
+        </dl>
+        <dl class="message-properties">
+            <dt>msg.adapterId <span class="property-type">string</span></dt>
+            <dd>Adapter ID of requested device</dd>
+        </dl>
+        <dl class="message-properties">
+            <dt>msg._auroralReqId <span class="property-type">string</span></dt>
+            <dd>request id, used in auroralResponse</dd>
+        </dl>
+    </ol>
+    <h3>Details</h3>
+    This service is registered in Auroral agent with name and adapterId specified in config.
+    Afterwards, when node is deployed, it is possible to make requests for getting data from devices connected to Auroral network.
+    They are addressable by OID and PID, sent in properities <code>msg.oid</code> and <code>msg.pid</code>.
+    <h3>Notes</h3>
+    <li>You need to enable device in Auroral dashboard before making requests</li>
+    <li>Do not update device after deploying. Remove them and recreate if needed </li>
+    <li>Flow started in this node should end in node auroralResponse, otherwise answer is not sent to Auroral network </li>
+<!-- <h3>References</h3>
+    <ul>
+        <li><a>GitHub</a> - the nodes github repository</li>
+    </ul> -->
 </script>
