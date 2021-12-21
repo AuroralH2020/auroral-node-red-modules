@@ -1,11 +1,11 @@
 {
     "name": "node-red-contrib-auroral",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "description": "Nodes for contributing to AURORAL network",
     "repository": {
         "type": "git",
         "url": "git+ssh://git@github.com:AuroralH2020/auroral-node-red-modules.git"
-      },
+    },
     "node-red": {
         "version": ">=2.0.0",
         "nodes": {
@@ -16,7 +16,9 @@
             "auroralDataCollector": "./src/nodes/auroralDataCollector.js"
         }
     },
-    "keywords": ["node-red"],
+    "keywords": [
+        "node-red"
+    ],
     "dependencies": {
         "got": "^11.8.3",
         "stoppable": "^1.1.0",
