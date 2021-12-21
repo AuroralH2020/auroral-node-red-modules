@@ -25,6 +25,15 @@
 
 <script type="text/html" data-help-name="auroralResponse">
     <p>Sends answer back to AURORAL agent</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>msg.payload
+            <span class="property-type">string</span>
+        </dt>
+        <dd> Body of message</dd>
+        <dt>msg.statusCode <span class="property-type">number</span></dt>
+        <dd> HTTP status code for response. If not presented, default value is 200</dd>
+    </dl>
     <h3>Details</h3>
-    Requested data should be send in <code>msg.payload</code>
+    Requested data should be in <code>msg.payload</code>. You are also able to specify HTTP status code in <code>msg.statusCode</code>. By default all messages are sent with status code 200
 </script>
