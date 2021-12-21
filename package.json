@@ -2,6 +2,10 @@
     "name": "node-red-contrib-auroral",
     "version": "1.2.1",
     "description": "Nodes for contributing to AURORAL network",
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com:AuroralH2020/auroral-node-red-modules.git"
+      },
     "node-red": {
         "version": ">=2.0.0",
         "nodes": {
