@@ -27,14 +27,15 @@
 </script>
 
 <script type="text/html" data-help-name="registrations">
-    <p>Get registartions from Auroral Agent</p>
+    <p>Get registrations from Auroral Agent</p>
     <h3>Outputs</h3>
     <ol class="node-ports">
         <dl class="message-properties">
             <dt>msg.payload <span class="property-type">array</span></dt>
-            <dd>Array of OIDS representing devices registered in connected Auroral agent</dd>
+            <dd>Array of objects representing devices registered in connected Auroral agent. 
+                There are multiplte details for each object (oid, adapterId, properities,...)</dd>
         </dl>
     </ol>
     <h3>Details</h3>
-    This node returns array OIDs registered in connected auroral agent
+    This node returns array of objects registered in connected auroral agent
 </script>

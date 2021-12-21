@@ -1,30 +1,57 @@
 <script type="text/javascript">
 
     RED.nodes.registerType('auroralRequest',{
+        
         category: 'Auroral',
         color: '#3FADB5',
         defaults: {
             name: { value: "", required: true },
             objectId: { value: "", required: true },
-            pids: { value: "", required: true },
-            agent: { value: "", type:"auroral-agent", required: true },
+            agent: { value: "", type: "auroral-agent", required: true },
             outputs: { value: 1 },
+            registering: { value: true },
+            unregistering: { value: true },
+            separateOutputs: { value: true },
+            pids: { value: "", required: true, validate: function(pids) 
+            {
+                try{ 
+                    const p = JSON.parse(pids)
+                    if(!Array.isArray(p)){
+                        throw new Error()
+                    }
+                    p.forEach((pid)=>{
+                        if(typeof pid != 'string')
+                        {throw new Error()}
+                    })
+                    return true
+                } catch {
+                    return false
+                }
+              } 
+            }
         },
         outputLabels: function(index) {
             try {
-                // try to parse PIDS
-                const pids = JSON.parse(this.pids)
-                if(pids.length > index){
-                    // return proper PID
-                    return pids[index];
+                if(this.separateOutputs){
+                    // try to parse PIDS
+                    const pids = JSON.parse(this.pids)
+                    if(pids.length > index){
+                        // return proper PID
+                        return pids[index];
+                    }
+                    return "unknown"
                 }
-                return "unknown"
+                return "PIDS"
             } catch (error) {
                 return "unknown"
             }
         },
         oneditprepare: function (){
             var node = this;
+            // disable adapterId changes  
+            if(node.objectId){
+                $("#node-input-objectId").prop( "disabled", true );
+            }
             // for JSON input type
             $("#node-input-pids").typedInput({
                 type:"json",
@@ -35,9 +62,14 @@
             var node = this;
             try {
                 // create proper number of outputs
-                const pidString = $("#node-input-pids").val()
+                const pidString = $("#node-input-pids").val();
+                const separateOutputs = $("#node-input-separateOutputs").is(":checked");
                 const pids = JSON.parse(pidString)
-                node.outputs = pids.length
+                if(separateOutputs){
+                    node.outputs = pids.length
+                } else {
+                    node.outputs = 1
+                }
             } catch (error) {
                 console.log(error)
                 node.outputs = 0
@@ -49,27 +81,60 @@
             return this.name || "auroralRequest";
         }
     });
+    function validatePids(pids){
+        try {
+            const pidsParsed = JSON.parse(config.pids);
+            if(!Array.isArray(pidsParsed)){
+                throw new Error('PIDS has to be array of strings');
+            }
+            pidsParsed.forEach(pid => {
+                if(typeof pid != 'string'){
+                    throw new Error('PIDS has to be array of strings');
+                }
+            })
+        } catch(err) {
+            return false
+        }
+    }
 </script>
 
 <script type="text/html" data-template-name="auroralRequest">
+    <h3>Object settings</h3>
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-cube"></i> Name:</label>
         <input type="text" id="node-input-name" placeholder="Device123">
     </div>
     <div class="form-row">
-        <label for="node-input-objectId"><i class="fa fa-cube"></i> AdapterId:</label>
+        <label for="node-input-objectId"><i class="fa fa-angle-up"></i> AdapterId:</label>
         <input type="text" id="node-input-objectId" placeholder="custom object ID">
     </div>
     <div class="form-row">
         <label for="node-input-pids"><i class="fa fa-cubes"></i> PIDS:</label>
         <input type="text" id="node-input-pids" placeholder='["PID1", "PID2"]'>
         <input type="hidden" id="node-input-pids-type">
-        
     </div>
     <div class="form-row">
         <label for="agent-url"><i class="fa fa-plug"></i> Agent:</label>
         <input id="node-input-agent" >
     </div>
+    <div class="form-row">
+        <label></label> 
+        <input type="checkbox" id="node-input-registering" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
+        <label style="margin-left:5px; width:auto !important;" for="node-input-registering">Register item if doesn't exists</label>
+    </div>
+    <div class="form-row">
+        <label></label>
+        <input type="checkbox" id="node-input-unregistering" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
+        <label style="margin-left:5px; width:auto !important;" for="node-input-unregistering">Unregister item when destroyed</label>
+    </div>
+    <h3>Appearance</h3>
+    <div for="node-input-unregistering" class="form-row">
+        <label class="">Outputs:</label>
+        <input type="checkbox" id="node-input-separateOutputs" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
+        <label style="margin-left:5px; width:auto !important;" for="node-input-separateOutputs">One PID per output</label>
+    </div>
+    
+
 </script>
 
 <script type="text/html" data-help-name="auroralRequest">
@@ -77,7 +142,7 @@
     <h3>Outputs</h3>
     <ol class="node-ports">
         This node has multiple outputs, named by PIDs. When data are requested from registered device, proper PID output is trigered.
-        Each sent message represents data request and contains these properities:
+        Each sent message represents data request and contains these properties:
         <dl class="message-properties">
             <dt>msg.oid <span class="property-type">string</span></dt>
             <dd>OID of requested device</dd>
@@ -98,10 +163,9 @@
     <h3>Details</h3>
     This service is registered in Auroral agent with name and adapterId specified in config.
     Afterwards, when node is deployed, it is possible to make requests for getting data from devices connected to Auroral network.
-    They are addressable by OID and PID, sent in properities <code>msg.oid</code> and <code>msg.pid</code>.
+    They are addressable by OID and PID, sent in properties <code>msg.oid</code> and <code>msg.pid</code>.
     <h3>Notes</h3>
     <li>You need to enable device in Auroral dashboard before making requests</li>
-    <li>Do not update device after deploying. Remove them and recreate if needed </li>
     <li>Flow started in this node should end in node auroralResponse, otherwise answer is not sent to Auroral network </li>
 <!-- <h3>References</h3>
     <ul>

@@ -9,7 +9,7 @@ module.exports = function(RED) {
 
         //register
         this.agentNode = (node.context().global).get('auroral_agent')
-        this.agentNode.emit('registerDevice', { "objectId": config.objectId, "name": config.name, pids: [],  "node": this }, 'Service')
+        this.agentNode.emit('registerDevice', { "objectId": config.objectId, "name": config.name, pids: [], "registering": config.registering,"node": this }, 'Service')
 
         this.on('request', function() {
             node.error('Service are not allowed to recieve requests')
@@ -24,16 +24,16 @@ module.exports = function(RED) {
             }
             // Unknown OID and PID
             if(!msg.oid || !msg.pid) {
-                node.error('Set msg.OID and msg.PID')
+                node.error('Set msg.oid and msg.pid')
                 done()
                 return;
             }
             // get requested data
             try {
                 (async function() {
-                    const registrations = await getAgent(node, '/api/properties/' + node.oid + '/' + msg.oid + '/' + msg.pid)
-                    if(registrations){
-                        send({payload: JSON.parse(registrations)})
+                    const requestedData = await getAgent(node, 'api/properties/' + node.oid + '/' + msg.oid + '/' + msg.pid)
+                    if(requestedData){
+                        send({payload: requestedData})
                     }
                 })();
             } catch (error) {
@@ -52,8 +52,10 @@ module.exports = function(RED) {
 
         // closing flow, or removing node
         this.on('close', function(removed, done) {
-            if (removed) {
-                // if node is removed, call agent to unregister
+            const node = this
+            // if node removed and unregistering is enabled 
+            if (removed && node.config.unregistering) {
+                // call agent to unregister
                 this.agentNode.emit('unregisterDevice', config.objectId)
             }
             done();
@@ -66,12 +68,7 @@ module.exports = function(RED) {
 async function getAgent(node, url){
     const got = require('got');
     try {
-        const response = await got.get('http://' + node.agent.host + ':' + node.agent.port + url, 
-        {
-            timeout: {
-                response: 7000
-            }
-        });
+        const response = await got.get(url, node.agent.requestOptions);
         return response.body
     } catch (error) {
         node.error('Error getAgent: ' + error)

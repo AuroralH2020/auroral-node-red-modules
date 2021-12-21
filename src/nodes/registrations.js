@@ -3,15 +3,26 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,config);
         this.agent = RED.nodes.getNode(config.agent);
         const node = this
+        // console.log(this.agent) 
 
         // incoming message
         this.on('input', function(msg, send, done) {
             try {
                 (async function() {
-                    const registrations = await getAgent(node, '/api/registration')
-                    if(registrations){
-                        send({payload: JSON.parse(registrations)})
-                    }
+                    const registrations = await getAgent(node, 'admin/registrations')
+                if(!registrations){
+                    node.error('Agent is offline')
+                    return
+                }
+                //get registrationData with pids and adapterId
+                let regDetails = await Promise.all(registrations.map(async (reg) => {
+                    var returnObj = await getAgent(node, 'admin/registrations/' + reg)
+                    returnObj.oid = reg
+                    return returnObj
+                }));
+                if(regDetails){
+                    send({payload: regDetails})
+                }
                 })();
             } catch (error) {
                 this.error('ERROR:' + error)
@@ -26,7 +37,8 @@ module.exports = function(RED) {
 async function getAgent(node, url){
     const got = require('got');
     try {
-        const response = await got.get('http://' + node.agent.host + ':' + node.agent.port + url);
+        console.log(url)
+        const response = await got.get(url, node.agent.requestOptions);
         return response.body
     } catch (error) {
         node.error('Error getAgent: ' + error)

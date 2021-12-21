@@ -2,31 +2,117 @@
     RED.nodes.registerType('auroral-agent',{
         category: 'config',
         defaults: {
-            host: { value: "localhost",required: true },
+            host: { value: "localhost", required: true },
             port: { value: 81, required: true, validate: RED.validators.number() },
-            serverPort: { value: 1250, required:true, validate:RED.validators.number() },
+            serverPort: { value: 1250, required: true, validate: RED.validators.number() },
+            protocol: { value: "http" },
+            authentification: { value: false },
+            validateCertificate: { value: true }
+        },
+        credentials: {
+            password: { type: "password" },
+            username: { type: "text" },
         },
         label: function() {
-            return this.host + ":" + this.port;
-        }
+            return this.protocol + '://' +  this.host + ":" + this.port;
+        },
+        oneditprepare: function (){
+            var node = this;
+            // hide if auth is disabled
+            $("#node-config-input-authentification").on('change', ()=>{
+                if($("#node-config-input-authentification").is(":checked")){
+                    $(".optional-credentials").prop("hidden", false)
+                } else{
+                    $(".optional-credentials").prop("hidden", true)
+                    $("#node-config-input-username").val("")
+                    $("#node-config-input-password").val("")
+                }
+            })
+            // protocol select prepare
+            $("#node-config-input-protocol").typedInput({
+                types: [
+                    {
+                        value: "http",
+                        options: [
+                            { value: "http", label: "http"},
+                            { value: "https", label: "https"},
+                        ]
+                    }
+                ]
+            })
+            // disable do not validate
+            if($("#node-config-input-protocol").val()=='https'){
+                $(".optional-validation").prop('hidden', false)
+            } else {
+                $(".optional-validation").prop('hidden', true)
+            }
+            $("#node-config-input-protocol").on('change', (val)=>{
+                if($("#node-config-input-protocol").val()=='https'){
+                    $(".optional-validation").prop('hidden', false)
+                } else {
+                    $(".optional-validation").prop('hidden', true)
+                }
+            })
+        },
     });
 </script>
 
 <script type="text/html" data-template-name="auroral-agent">
+    <h3>Auroral agent connection</h3>
     <div class="form-row">
-        <label for="node-config-input-host"><i class="fa fa-bookmark"></i> Host</label>
+        <label for="node-config-input-protocol"><i class="fa fa-angle-up"></i> Protocol</label>
+        <input type="text" id="node-config-input-protocol">
+    </div>
+    <div class="form-row optional-validation">
+        <label></label> </label>
+        <input type="checkbox" id="node-config-input-validateCertificate" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
+        <label style="margin-left:5px; width:auto !important;" for="node-config-input-validateCertificate" >Validate certificate</label>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-host"><i class="fa fa-angle-double-right"></i> Host</label>
         <input type="text" id="node-config-input-host">
     </div>
     <div class="form-row">
-        <label for="node-config-input-port"><i class="fa fa-bookmark"></i> Port</label>
+        <label for="node-config-input-port"><i class="fa fa-tag"></i> Port</label>
         <input type="text" id="node-config-input-port">
     </div>
     <div class="form-row">
-        <label for="node-config-input-serverPort"><i class="fa fa-bookmark"></i> Server port</label>
+        <label for="node-config-input-authentification"><i class="fa fa-lock"></i> Basic auth:</label>
+        <input type="checkbox" id="node-config-input-authentification">
+    </div>
+    <div class="form-row optional-credentials" hidden>
+        <label for="node-config-input-username"><i class="fa fa-angle-down"></i> Username:</label>
+        <input type="text" id="node-config-input-username">
+    </div>
+    <div class="form-row optional-credentials" hidden>
+        <label for="node-config-input-password"><i class="fa fa-angle-down"></i> Password:</label>
+        <input type="password" id="node-config-input-password">
+    </div>
+    <hr>
+    <h3>Local settings</h3>
+    <div class="form-row">
+        <label for="node-config-input-serverPort"><i class="fa fa-tags"></i> Server port</label>
         <input type="text" id="node-config-input-serverPort">
     </div>
 </script>
 
-<script type="text/html" data-help-name="auroralAgent">
+<script type="text/html" data-help-name="auroral-agent">
     <p>Creates connection with Auroral agent</p>
+    
+    <h3>Details</h3>
+    This config node handles connection with Auroral agent. 
+    <li><code>protocol</code> HTTP / HTTPS based if your agent is behind secured proxy (default unsecured HTTP) </li>
+    <li><code>hostname</code> Hostname of your agent instance. If you are running in same docker network, you can use internal domain network name (auroral-agent). 
+        If not, please specify valid IP or domain name of Agent</li>
+    <li><code>hostname</code> If you are running in same docker network and using dns auroral-agent, please choose port 4000. If not, choose proper port (choosen while initialisation of node, default 81)</li>
+    <li><code>Auth</code> Please specify if you are using Basic authentification. (default disabled)</li>
+    <li><code>Local server</code> This connector uses hidden http server for reverse connection from Auroral agent. Here you can choose port for this server (default 1250).</li>
+    <h3>Auroral agent preparation</h3>
+    For proper functionality you have to setup connection to this node-red connector also in Auroral agent. 
+    It is done in .env file, where you need to edit theese three  parameters:
+    <li><code>ADAPTER_MODE</code> should be 'proxy'</li>
+    <li><code>ADAPTER_HOST</code> should be dns or IP of this node-red instnance. If you are running in same docker network, you can choose internal name of container (typically node-red</li>
+    <li><code>ADAPTER_PORT</code> should be same as Local server port </li>
+<!-- <h3>References</h3>
+    <ul>
 </script>

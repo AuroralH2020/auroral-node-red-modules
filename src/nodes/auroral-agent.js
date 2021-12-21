@@ -3,14 +3,26 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,n);
         var http = require('http');
         var uuid = require('uuid');
+        const got = require('got');
         var stoppable = require('stoppable');
         const node = this
 
         // settings
-        this.host = n.host;
-        this.port = n.port;
-        this.serverPort = n.serverPort;
+        this.baseUrl = n.protocol + "://" + n.host + ":" + n.port + '/'
+        this.auth = n.authentification
+        this.serverPort = n.serverPort
+        this.validateCertificate = n.validateCertificate // TODO 
+        this.requestOptions = {
+            prefixUrl: this.baseUrl,
+            responseType: 'json',
+            username: this.auth ? this.credentials.username : undefined,
+            password: this.auth ? this.credentials.password : undefined,
+            timeout: {
+                response: 7000
+            }
+        };
         this.devices = new Array();
+        this.devicesAdapterIds = new Array();
         this.unregisterRequests = new Array();
 
         // store node in context to allow registrations
@@ -19,33 +31,32 @@ module.exports = function(RED) {
         // get registrations
         (async function() {
             try{
-                const registrationsResponse = await getAgent(node, '/admin/registrations')
-                if(!registrationsResponse){
+                const registrations = await getAgent(node, 'admin/registrations')
+                if(!registrations){
                     node.error('Agent is offline')
                     return
                 }
-                const registrations = JSON.parse(registrationsResponse)
 
                 //get registrationData with pids and adapterId
                 node.agentData = await Promise.all(registrations.map(async (reg) => {
-                    var returnObj = JSON.parse(await getAgent(node, '/admin/registrations/' + reg))
+                    var returnObj = await getAgent(node, 'admin/registrations/' + reg)
                     returnObj.oid = reg
                     return returnObj
                 }));
                 // waiting 300 milisecond to gather all register calls from nodes
                 await new Promise(r => setTimeout(r, 300));
                 for (const device of node.devices) {
-                    const oid = getOid(node,device.objectId)
-                    if(oid == undefined){
-                        //registering new device
+                    const agentDevice = getAgendeviceByAdapterId(node,device.objectId)
+                    if(agentDevice == undefined && device.registering){
+                        //registering new device 
                         const data = {
                             name: device.name,
                             adapterId: device.objectId,
-                            properties: device.pids,
+                            properties: [...device.pids],
                             type: device.type
                         };
                         //send request
-                        const response = (await postAgent(node, '/api/registration/', data))[0];
+                        const response = (await postAgent(node, 'api/registration/', data))[0];
 
                         if(response) {
                             // emit message to node and store OID
@@ -58,12 +69,20 @@ module.exports = function(RED) {
                             // registration error
                             node.log('Device: '+ device.name + ' - was not  registered ')
                         }
-                    } else {
+                    } else if(agentDevice != undefined){
                         // device is already registered - emit to node
-                        node.log('Device: '+ device.name + ' - already registered [' + oid +']')
-                        device.oid = oid;
+                        if (await compareAndUpdate(node, device, agentDevice)){
+                            node.log('Device: '+ device.name + ' - updated [' + agentDevice.oid +']')
+                        } else{
+                            node.log('Device: '+ device.name + ' - already registered [' + agentDevice.oid +']')
+                        }
+                        device.oid = agentDevice.oid;
                         device.registered = true
-                        device.node.emit('registered', oid);
+                        device.node.emit('registered', agentDevice.oid);
+                    } else {
+                        // unregistered device
+                        node.log('Device: '+ device.name + ' - waiting for manual registration')
+                        node.error('Device: '+ device.name + ' - please redeploy after manual registraion')
                     }
                 }
             } catch (error){
@@ -71,7 +90,6 @@ module.exports = function(RED) {
                 node.error('Fatal error:' + error)
            } 
            })();
-
         // init server
         this.httpServer = stoppable(http.createServer(function (req, res) {
             const url = req.url.split('/')
@@ -133,13 +151,23 @@ module.exports = function(RED) {
           }));
 
         // start server
-        this.httpServer.listen(this.serverPort)
+        this.httpServer.listen(this.serverPort).on('error', (err)=>{
+            node.error('Server problem: ' + err.message)
+                })
         
         // function for 'request' nodes
         this.on('registerDevice', function(obj, type) {
-            obj.registered = false
-            obj.type = type
-            this.devices.push(obj)
+            obj.registered = false;
+            obj.type = type;
+            if(this.devicesAdapterIds.includes(obj.objectId) && type === 'Device' ){
+                node.error('Multiple uses of same adapterId');
+                setTimeout(function(){ 
+                    obj.node.emit('registrationFailure', 'Multiple uses of this adapterId');
+                }, 100);
+            } else {
+                this.devicesAdapterIds.push(obj.objectId)
+                this.devices.push(obj)
+            }
         });
         // function for unregistering devices after removal
         this.on('unregisterDevice',  async function(id) {
@@ -167,7 +195,7 @@ module.exports = function(RED) {
                         return
                     }
                     // send unregister request
-                    await postAgent(node, '/api/registration/remove', { oids } )
+                    await postAgent(node, 'api/registration/remove', { oids } )
                     } catch (error) {
                         node.error('ERROR')
                         node.error(error)
@@ -177,14 +205,19 @@ module.exports = function(RED) {
         });
         (this.context().global).set('auroral_agent', this);
     }
-    RED.nodes.registerType("auroral-agent", AuroralAgentNode);
+    RED.nodes.registerType("auroral-agent", AuroralAgentNode,{
+        credentials: {
+            username: {type:"text"},
+            password: {type:"password"},
+        }
+    })
 }
 
 // get request with given URL, returns body or undefined
 async function getAgent(node, url){
     const got = require('got');
     try {
-        const response = await got.get('http://' + node.host + ':' + node.port + url);
+        const response = await got.get(url, node.requestOptions);
         return response.body
     } catch (error) {
         node.error('Error getAgent: ' + error)
@@ -192,10 +225,10 @@ async function getAgent(node, url){
     }
 }
 // function returns oid from adapterId (called id)
-function getOid(node, id){
+function getAgendeviceByAdapterId(node, id){
     for (const agentDevice of node.agentData) {
         if(agentDevice.adapterId != undefined && agentDevice.adapterId == id ){
-            return agentDevice.oid
+            return agentDevice
         }
     }
     return undefined
@@ -205,14 +238,60 @@ function getOid(node, id){
 async function postAgent(node, url, objData){
         const got = require('got');
         try {
-            const response = await got.post('http://' + node.host + ':' + node.port + url, 
-            {
-                json: objData,
-                responseType: 'json'
-            });
+            const options = Object.assign(node.requestOptions)
+            options.json = objData
+            const response = await got.post(url, options);
             return response.body
         } catch (error) {
             node.error('Error postAgent: ' + error)
             return undefined
         }
+}
+
+// post request with given URL and objData, returns body or undefined
+async function putAgent(node, url, objData){
+    const got = require('got');
+    try {
+        const options = Object.assign(node.requestOptions)
+        options.json = objData
+        const response = await got.put(url, options);
+        return response.body
+    } catch (error) {
+        node.error('Error putAgent: ' + error)
+        return undefined
+    }
+}
+
+// compare local registered item with one in agent
+// if there are changes - it will update agent
+async function compareAndUpdate(node, local, agent){
+    try {
+        // to be sure
+        if(local.objectId != agent.adapterId){
+            throw new Error ('unexpected error objectId != adapterId')
+        }
+        // update only devices
+        if(agent.type !='Device'){
+            return false
+        }
+        let toUpdate = false;
+        let updateObject = {};
+        if(local.name != agent.name){
+            toUpdate = true;
+            updateObject.name = local.name
+        }
+        if(JSON.stringify(local.pids)  != JSON.stringify(agent.properties)){
+            toUpdate = true;
+            updateObject.properties = [...local.pids]
+        }
+        if(toUpdate){
+            updateObject.oid = agent.oid
+            await putAgent(node, 'api/registration/', updateObject)
+            return true
+        }
+        return false
+    } catch (error) {
+        node.error('Error comparing items: ' + error)
+        return undefined
+    }
 }

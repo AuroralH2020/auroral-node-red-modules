@@ -7,6 +7,8 @@
             name: { value: "", required: true },
             objectId: { value: "", required: true },
             agent: { value: "", type: "auroral-agent", required: true },
+            registering: { value: true },
+            unregistering: { value: true },
         },
         outputs: 1,
         inputs: 1,
@@ -29,6 +31,16 @@
     <div class="form-row">
         <label for="agent-url"><i class="fa fa-plug"></i> Agent:</label>
         <input id="node-input-agent" >
+    </div>
+    <div class="form-row">
+        <label></label> </label>
+        <input type="checkbox" id="node-input-registering" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
+        <label style="margin-left:5px; width:auto !important;" for="node-input-registering" data-i18n="trigger.extend">Register item if doesn't exists</label>
+    </div>
+    <div class="form-row">
+        <label></label> </label>
+        <input type="checkbox" id="node-input-unregistering" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
+        <label style="margin-left:5px; width:auto !important;" for="node-input-unregistering" data-i18n="trigger.extend">Unregister item when destroyed</label>
     </div>
 </script>
 
@@ -58,7 +70,6 @@
     They are addressable by OID and PID, sent in properities <code>msg.oid</code> and <code>msg.pid</code>.
     <h3>Notes</h3>
     <li>You need to enable service in Auroral dashboard before making requests</li>
-    <li>Do not update services after deploying. Remove them and recreate if needed </li>
 <!-- <h3>References</h3>
     <ul>
         <li><a>GitHub</a> - the nodes github repository</li>
