@@ -1,5 +1,9 @@
 # Auroral adapter module for NODE-RED #
 
+Node-red modules for AURORAL adapter
+
+Developed for AURORAL H2020 project
+
 ## Disclaimer
 
 Beta version still under testing
