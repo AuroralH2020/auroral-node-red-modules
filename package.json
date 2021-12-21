@@ -16,6 +16,7 @@
             "auroralDataCollector": "./src/nodes/auroralDataCollector.js"
         }
     },
+    "keywords": ["node-red"],
     "dependencies": {
         "got": "^11.8.3",
         "stoppable": "^1.1.0",
