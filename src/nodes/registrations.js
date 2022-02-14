@@ -9,14 +9,14 @@ module.exports = function(RED) {
         this.on('input', function(msg, send, done) {
             try {
                 (async function() {
-                    const registrations = await getAgent(node, 'admin/registrations')
+                    const registrations = await getAgent(node, 'api/registration')
                 if(!registrations){
                     node.error('Agent is offline')
                     return
                 }
                 //get registrationData with pids and adapterId
                 let regDetails = await Promise.all(registrations.map(async (reg) => {
-                    var returnObj = await getAgent(node, 'admin/registrations/' + reg)
+                    var returnObj = await getAgent(node, 'api/registration/' + reg)
                     returnObj.oid = reg
                     return returnObj
                 }));

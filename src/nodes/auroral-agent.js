@@ -34,7 +34,7 @@ module.exports = function(RED) {
         // get registrations
         (async function() {
             try{
-                const registrations = await getAgent(node, 'admin/registrations')
+                const registrations = await getAgent(node, 'api/registration')
                 if(!registrations){
                     node.error('Agent is offline')
                     return
@@ -42,7 +42,7 @@ module.exports = function(RED) {
 
                 //get registrationData with pids and adapterId
                 node.agentData = await Promise.all(registrations.map(async (reg) => {
-                    var returnObj = await getAgent(node, 'admin/registrations/' + reg)
+                    var returnObj = await getAgent(node, 'api/registration/' + reg)
                     returnObj.oid = reg
                     return returnObj
                 }));
@@ -59,6 +59,7 @@ module.exports = function(RED) {
                             type: device.type
                         };
                         //send request
+                        node.log('Sending registration request')
                         const response = (await postAgent(node, 'api/registration/', data))[0];
 
                         if(response) {
