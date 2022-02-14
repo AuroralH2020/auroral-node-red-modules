@@ -7,7 +7,9 @@
             serverPort: { value: 1250, required: true, validate: RED.validators.number() },
             protocol: { value: "http" },
             authentification: { value: false },
-            validateCertificate: { value: true }
+            ignoreCertificate: { value: false },
+            // customCertificate: { value: false },
+            // customCertificateText: { value: '' }
         },
         credentials: {
             password: { type: "password" },
@@ -52,8 +54,35 @@
                 } else {
                     $(".optional-validation").prop('hidden', true)
                 }
+                if($("#node-config-input-customCertificate").is(":checked")){
+                    $(".custom-cert").prop('hidden', false)
+                } else {
+                    $(".custom-cert").prop('hidden', true)
+                }
             })
+            // hide custom cert
+            $("#node-config-input-customCertificate").on('change', (val)=>{
+                if($("#node-config-input-customCertificate").is(":checked")){
+                    $(".custom-cert").prop('hidden', false)
+                } else {
+                    $(".custom-cert").prop('hidden', true)
+                }
+            })
+            // this.editor = RED.editor.createEditor({
+            // id: 'node-config-input-customCertificate-editor',
+            // mode: 'ace/mode/text',
+            // value: this.customCertificateText
+            // });
         },
+        // oneditsave: function() {
+        //     this.customCertificateText = this.editor.getValue();
+        //     this.editor.destroy();
+        //     delete this.editor;
+        // },
+        // oneditcancel: function() {
+        //     this.editor.destroy();
+        //     delete this.editor;
+        // },
     });
 </script>
 
@@ -64,10 +93,16 @@
         <input type="text" id="node-config-input-protocol">
     </div>
     <div class="form-row optional-validation">
-        <label></label> </label>
-        <input type="checkbox" id="node-config-input-validateCertificate" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
-        <label style="margin-left:5px; width:auto !important;" for="node-config-input-validateCertificate" >Validate certificate</label>
+        <label></label> 
+        <input type="checkbox" id="node-config-input-ignoreCertificate" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
+        <label style="margin-left:5px; width:auto !important;" for="node-config-input-ignoreCertificate" >Disable certificate validation</label>
     </div>
+    <!-- <div class="form-row optional-validation">
+        <label></label> 
+        <input type="checkbox" id="node-config-input-customCertificate" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
+        <label style="margin-left:5px; width:auto !important;" for="node-config-input-customCertificate" >Upload custom public key</label>
+    </div> -->
+    <!-- <div style="height: 250px; min-height:150px;" class="node-text-editor optional-validation custom-cert" id="node-config-input-customCertificate-editor"></div> -->
     <div class="form-row">
         <label for="node-config-input-host"><i class="fa fa-angle-double-right"></i> Host</label>
         <input type="text" id="node-config-input-host">

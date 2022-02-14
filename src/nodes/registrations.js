@@ -37,7 +37,6 @@ module.exports = function(RED) {
 async function getAgent(node, url){
     const got = require('got');
     try {
-        console.log(url)
         const response = await got.get(url, node.agent.requestOptions);
         return response.body
     } catch (error) {

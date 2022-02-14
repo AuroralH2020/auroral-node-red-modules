@@ -11,12 +11,15 @@ module.exports = function(RED) {
         this.baseUrl = n.protocol + "://" + n.host + ":" + n.port + '/'
         this.auth = n.authentification
         this.serverPort = n.serverPort
-        this.validateCertificate = n.validateCertificate // TODO 
+        // console.log(n.customCertificateText)
         this.requestOptions = {
             prefixUrl: this.baseUrl,
             responseType: 'json',
             username: this.auth ? this.credentials.username : undefined,
             password: this.auth ? this.credentials.password : undefined,
+            https: {
+                rejectUnauthorized: n.ignoreCertificate? false : true,
+            },
             timeout: {
                 response: 7000
             }
@@ -238,7 +241,7 @@ function getAgendeviceByAdapterId(node, id){
 async function postAgent(node, url, objData){
         const got = require('got');
         try {
-            const options = Object.assign(node.requestOptions)
+            const options = JSON.parse(JSON.stringify(node.requestOptions));
             options.json = objData
             const response = await got.post(url, options);
             return response.body
@@ -252,7 +255,7 @@ async function postAgent(node, url, objData){
 async function putAgent(node, url, objData){
     const got = require('got');
     try {
-        const options = Object.assign(node.requestOptions)
+        const options = JSON.parse(JSON.stringify(node.requestOptions));
         options.json = objData
         const response = await got.put(url, options);
         return response.body
