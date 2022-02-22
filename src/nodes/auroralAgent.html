@@ -1,5 +1,5 @@
 <script type="text/javascript">
-    RED.nodes.registerType('auroral-agent',{
+    RED.nodes.registerType('auroralAgent',{
         category: 'config',
         defaults: {
             host: { value: "localhost", required: true },
@@ -86,7 +86,7 @@
     });
 </script>
 
-<script type="text/html" data-template-name="auroral-agent">
+<script type="text/html" data-template-name="auroralAgent">
     <h3>Auroral agent connection</h3>
     <div class="form-row">
         <label for="node-config-input-protocol"><i class="fa fa-angle-up"></i> Protocol</label>
@@ -131,7 +131,7 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="auroral-agent">
+<script type="text/html" data-help-name="auroralAgent">
     <p>Creates connection with Auroral agent</p>
     
     <h3>Details</h3>
@@ -140,14 +140,14 @@
     <li><code>hostname</code> Hostname of your agent instance. If you are running in same docker network, you can use internal domain network name (auroral-agent). 
         If not, please specify valid IP or domain name of Agent</li>
     <li><code>hostname</code> If you are running in same docker network and using dns auroral-agent, please choose port 4000. If not, choose proper port (choosen while initialisation of node, default 81)</li>
-    <li><code>Auth</code> Please specify if you are using Basic authentification. (default disabled)</li>
+    <li><code>Auth</code> Please specify if you are using Basic authentification. (disabled by default)</li>
     <li><code>Local server</code> This connector uses hidden http server for reverse connection from Auroral agent. Here you can choose port for this server (default 1250).</li>
     <h3>Auroral agent preparation</h3>
-    For proper functionality you have to setup connection to this node-red connector also in Auroral agent. 
+    For proper functionality you need to setup connection to this node-red connector also in Auroral agent. 
     It is done in .env file, where you need to edit theese three  parameters:
     <li><code>ADAPTER_MODE</code> should be 'proxy'</li>
     <li><code>ADAPTER_HOST</code> should be dns or IP of this node-red instnance. If you are running in same docker network, you can choose internal name of container (typically node-red</li>
-    <li><code>ADAPTER_PORT</code> should be same as Local server port </li>
+    <li><code>ADAPTER_PORT</code> should be same as Local server port</li>
 <!-- <h3>References</h3>
     <ul>
 </script>

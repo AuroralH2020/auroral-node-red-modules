@@ -6,14 +6,30 @@
             name: { value:""} ,
             agent: { value:"" },
             pids: { value:"PID1" },
-            agent: { value:"", type:"auroral-agent" },
+            agent: { value:"", type:"auroralAgent" },
         },
         inputs:1,
         outputs:1,
         icon: "auroral.png",
         label: function() {
             return this.name || "registrations";
-        }
+        },
+        oneditprepare: function (){
+            this.editor = RED.editor.createEditor({
+                id: 'node-input-example-editor',
+                mode: 'ace/mode/text',
+                value: this.exampleText
+            });
+        },
+        oneditsave: function() {
+            this.exampleText = this.editor.getValue();
+            this.editor.destroy();
+            delete this.editor;
+        },
+        oneditcancel: function() {
+            this.editor.destroy();
+            delete this.editor;
+        },
     });
 </script>
 
@@ -24,6 +40,8 @@
         <label for="agent-url"><i class="fa fa-plug"></i> Auroral agent</label>
         <input id="node-input-agent" >
     </div>
+    <div style="height: 250px; min-height:150px;" class="node-text-editor" id="node-input-example-editor"></div>
+    
 </script>
 
 <script type="text/html" data-help-name="registrations">

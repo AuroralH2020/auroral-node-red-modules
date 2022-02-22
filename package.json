@@ -10,10 +10,9 @@
         "version": ">=2.0.0",
         "nodes": {
             "registrations": "./src/nodes/registrations.js",
-            "auroral-agent": "./src/nodes/auroral-agent.js",
+            "auroralAgent": "./src/nodes/auroralAgent.js",
             "auroralResponse": "./src/nodes/auroralResponse.js",
-            "auroralRequest": "./src/nodes/auroralRequest.js",
-            "auroralDataCollector": "./src/nodes/auroralDataCollector.js"
+            "auroralDevice": "./src/nodes/auroralDevice.js"
         }
     },
     "keywords": [
