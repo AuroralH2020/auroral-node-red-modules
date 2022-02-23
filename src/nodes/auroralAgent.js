@@ -246,7 +246,7 @@ async function processThings(RED, node){
         for (const device of node.devices) {
             try {
                 const agentDevice = await node.agent.getRegistrationByAdapterId(device.adapterId)
-                if(!agentDevice ) { // device is not registered in agent
+                if(!agentDevice) { // device is not registered in agent
                     if(device.regType == 'newItem'){
                         // newItem -> register device
                         node.log('Registering device: ' + device.name)

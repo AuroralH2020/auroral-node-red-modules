@@ -39,28 +39,16 @@ class Agent {
     // get properties for registration
     getRegistrationByAdapterId = async function (adapterId) {
         // console.log('get registration by adapterId')
-        try {
-            if(!this.registeredDevices){
-                const agentRegistrations = await this.getRegistrations()
-                this.registeredDevices = await Promise.all(agentRegistrations.map(async (oid) => {
-                    let returnObj = await this.getRegistration(oid)
-                    returnObj.oid = oid
-                    return returnObj
-                }));
-            }
-            let registration
-            this.registeredDevices.forEach(reg => {
-                if(reg.adapterId === adapterId){
-                    registration = reg
-                }
-            });
-            if(registration){
-                return registration
+        try{
+            const response = await got.get('api/registration/oid/' + adapterId,  {...this.requestOptions, responseType: 'text'});
+            if(response.body){
+                const device = await this.getRegistration(response.body)
+                return {...device, oid: response.body}
             } else {
-                return null
+               return null
             }
-        } catch (error) {
-            throw new Error('Error getting registration: ' + error)
+        } catch(error) {
+            throw new Error('Error getting registration by adapterId: ' + error)
         }
     }
     // returns thing description
