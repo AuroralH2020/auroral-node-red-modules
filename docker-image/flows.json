@@ -1,0 +1,19 @@
+[
+    {
+        "id": "f6f2187d.f17ca8",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "46c569a398ebce1e",
+        "type": "auroralAgent",
+        "host": "auroral-agent",
+        "port": "4000",
+        "serverPort": "1250",
+        "protocol": "http",
+        "authentification": false,
+        "ignoreCertificate": false
+    }
+]
