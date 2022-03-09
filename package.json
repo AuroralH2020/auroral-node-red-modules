@@ -15,6 +15,7 @@
             "auroralDevice": "./src/nodes/auroralDevice.js"
         }
     },
+    "license": "MIT",
     "keywords": [
         "node-red"
     ],
