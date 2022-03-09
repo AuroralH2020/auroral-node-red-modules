@@ -5,76 +5,62 @@ module.exports = function(RED) {
         node.config = config
         // get agent settings
         this.agentNode = RED.nodes.getNode(config.agent);
-        let pids = []
         // TEST TD
         try {
             const td = JSON.parse(config.td)
         } catch (error) {
             node.status({ fill:"red", shape:"ring", text:"Error in TD" });
-            node.error('TD needs to be JSON object')
+            node.error('TD is not JSON')
             return
         }
-        //TEST PIDS
         try {
+            // test PIDS
             if(!Array.isArray(config.pids)){
-                throw new Error('PIDS has to be array of strings');
+                throw new Error('Pids is not array of string');
             }
-            config.pids.forEach(pid => {
-                if(typeof pid != 'string'){
-                    throw new Error('PIDS has to be array of strings');
-                }
-            })
-            pids = config.pids
-        } catch(err) {
-            node.status({ fill:"red", shape:"ring", text:"Wrong PIDs" });
-            node.error('PIDS has to be array of strings')
-            return
-        }
-        //TEST NAME
-        try {
+            // test EIDS
+            if(!Array.isArray(config.eids)){
+                throw new Error('Pids is not array of string');
+            }
+            // test NAME
             if(!(config.name && (typeof config.name == 'string' || config.name instanceof String))) {
-                throw new Error()
+                throw new Error("TD.title missing")
+            }
+            // test subscribed events
+            if(config.allowEventSubscription){
+                if(!Array.isArray(config.subscribedEvents)){
+                    throw new Error("Subscribed events needs to be array of {'oid':'', 'eid':''}")
+                }
+                config.subscribedEvents.forEach(event => {
+                    if(!event.oid || !event.eid){
+                        throw new Error("Subscribed events needs to be array of {'oid':'', 'eid':''}")
+                    }
+                });
             }
         } catch(err) {
-            node.status({ fill:"red", shape:"ring", text:"Wrong TD" });
-            node.error('TD is missing Title field')
+            node.status({ fill:"red", shape:"ring", text:"Wrong settings" });
+            node.error(err.message)
             return
         }
-        
+        this.type = 'Device'
         // change status for waiting
         this.status({ fill:"grey", shape:"ring", text:"waiting for registration response" });
-        this.agentNode.emit('registerDevice', this.id , 'Device')
+        this.agentNode.emit('registerDevice', this.id , this.type)
 
+        // incoming property request
+        this.on('propertyRequest', function(obj) {
+            const node = this
+            node.log('Property request in node: ' + node.name)
+            this.send(obj);
+        });
         // incoming request
-        this.on('request', function(obj) {
-            node.log('New request in node: ' + node.name)
-            try{
-                var toSend=[];
-                // search for proper output by PID
-                if(!this.config.mergeOutputs){
-                    pids.forEach(pid => {
-                        // create output message only for one output  [ [], [], msg, [] ]
-                        if(pid == obj.pid){
-                            // node.log('sending to: '+ obj.pid)
-                            toSend.push(obj)
-                        }
-                        else{
-                            toSend.push([])
-                        }
-                    });
-                }
-                else{
-                    if(this.config.allowInput){
-                        toSend=[obj,[]]
-                    } else{
-                        toSend.push(obj)
-                    }
-                }
-                // send out 
-                this.send(toSend);
-            } catch {
-                // unexpected error
-                node.error("pid mismatch")
+        this.on('eventRequest', function(obj) {
+            const node = this
+            node.log('Event request in node: ' + node.name)
+            if(node.config.pids.length > 0){
+                this.send([[],obj]);
+            } else {
+                this.send(obj);
             }
         });
         
@@ -91,48 +77,74 @@ module.exports = function(RED) {
         // msg on input
         this.on('input', function(msg, send, done) {
             const node = this
-            //  NOT READY
-            if(this.oid == undefined){
-                node.error('ERROR: Not yet registered ')
-                done();
-                return;
-            }
-            // Unknown OID and PID
-            if(!msg.oid || !msg.pid) {
-                node.error('ERROR: Set msg.oid and msg.pid')
-                done()
-                return;
-            }
-            // get requested data
-            (async function() {
-                try {
-                    const requestedData = await node.agentNode.agent.getProperties(node.oid, msg.oid, msg.pid)
-                    if(requestedData){
-                        var toSend=[];
-                        if(!node.config.mergeOutputs){
-                            pids.forEach(pid => {
-                                toSend.push([])
-                            });
-                            toSend.push({payload: requestedData})
-                        }
-                        else{
-                            toSend.push([])
-                            toSend.push({payload: requestedData})
-                        }
-                        send(toSend)
-                    } else {
-                        throw new Error('Timeout')
-                    }
-                } catch (error) {
-                    node.error('ERROR:' + error)
-                    done();
-                    return;
+            try {
+                //  NOT READY
+                if(!this.oid){
+                    throw new Error('Not ready')
+                }   
+                // Unknown OID and PID
+                if(!msg.type){
+                    throw new('Set msg.type')
                 }
-            })();
+                if(msg.type === 'property'){
+                    if(!msg.oid){
+                        throw new Error('Set msg.oid')
+                    }
+                    if(!node.config.allowInput){
+                        throw new Error('Please allow getProperty')
+                    }
+                    if(!msg.pid){
+                        throw new Error('Set msg.pid')
+                    }
+                    // get requested data
+                    (async function() {
+                        try {
+                            const requestedData = await node.agentNode.agent.getProperties(node.oid, msg.oid, msg.pid)
+                            if(requestedData){
+                                send({payload: requestedData, oid: msg.oid, pid: msg.pid})
+                            } else {
+                                throw new Error('Timeout')
+                            }
+                        } catch (error) {
+                            node.error('ERROR:' + error)
+                            done();
+                            return;
+                        }
+                    })();
+                } else if ( msg.type === 'event'){
+                    if(!msg.eid){
+                        throw new Error('Set msg.eid')
+                    }
+                    // test eid is registered
+                    if(!node.config.eids.includes(msg.eid)){
+                        throw new Error('Eid is not registered')
+                    }
+                    // send event
+                    (async function() {
+                        try {
+                            const payload = node.agentNode.agent.responseMessageFormat(msg.payload) 
+                            await node.agentNode.agent.sendEventToChannel(node.oid, msg.eid, payload)
+                        } catch (error) {
+                            node.error('ERROR:' + error)
+                            done();
+                            return;
+                        }
+                    })();
+                } else {
+                    throw new Error('Unknown type')
+                }
+            } catch (error) {
+                node.error('ERROR: ' + error.message)
+                done()
+                return
+            }
         });
         // closing flow, or removing node
         this.on('close', function(removed, done) {
             const node = this
+            if (node.config.allowEventSubscription && node.oid) {
+                node.agentNode.emit('unsibscribeEvents', node.id)
+            }
             // if node removed and unregistering is enabled 
             if (removed && node.config.unregistering) {
                 // call agent to unregister

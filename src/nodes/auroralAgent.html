@@ -133,7 +133,6 @@
 
 <script type="text/html" data-help-name="auroralAgent">
     <p>Creates connection with Auroral agent</p>
-    
     <h3>Details</h3>
     This config node handles connection with Auroral agent. 
     <li><code>protocol</code> HTTP / HTTPS based if your agent is behind secured proxy (default unsecured HTTP) </li>
@@ -145,9 +144,9 @@
     <h3>Auroral agent preparation</h3>
     For proper functionality you need to setup connection to this node-red connector also in Auroral agent. 
     It is done in .env file, where you need to edit theese three  parameters:
-    <li><code>ADAPTER_MODE</code> should be 'proxy'</li>
-    <li><code>ADAPTER_HOST</code> should be dns or IP of this node-red instnance. If you are running in same docker network, you can choose internal name of container (typically node-red</li>
-    <li><code>ADAPTER_PORT</code> should be same as Local server port</li>
+    <li><code>ADAPTER_MODE</code>  'proxy'</li>
+    <li><code>ADAPTER_HOST</code>  dns or IP of this node-red instnance. If you are running in same docker network, you can choose internal name of container (typically node-red</li>
+    <li><code>ADAPTER_PORT</code>  Local server port (1250 by default)</li>
 <!-- <h3>References</h3>
     <ul>
 </script>

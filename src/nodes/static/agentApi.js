@@ -73,17 +73,20 @@ class Agent {
             }
             return response.body
         } catch (error) {
-            throw new Error('Error getting TD: ' + error)
+            throw new Error('Error new registration: ' + error)
         }
     }
     // register object
     putRegistration = async function (obj) {
-        console.log('updating thing')
         try {
+            if(!obj.td.id){
+                throw new Error('TD update - ID is missing')
+            }
+            console.log('Updating TD: ' + obj.id )
             const response = await got.put('api/registration/', {...this.requestOptions, json: obj});
             return response.body
         } catch (error) {
-            throw new Error('Error getting TD: ' + error)
+            throw new Error('Error updating registration: ' + error)
         }
     }
     // removing registration
@@ -93,7 +96,7 @@ class Agent {
             const response = await got.post('api/registration/remove' , {...this.requestOptions, json: {oids: oids}});
             return response.body
         } catch (error) {
-            throw new Error('Error getting TD: ' + error)
+            throw new Error('Error removing registration: ' + error)
         }
     }
     // removing registration
@@ -107,8 +110,89 @@ class Agent {
             }
             return response.body
         } catch (error) {
-            throw new Error('Error getting TD: ' + error)
+            throw new Error('Error getting properties: ' + error)
         }
+    }
+
+    sendEventToChannel = async function (oid, eid, data) {
+        console.log('Sending event to channel: ' + " OID:"+ oid + ' EID:' + eid + ' DATA: '+ data)
+        try {
+            const response = await got.put('api/events/local/' + oid + '/' + eid , {json: data, ...this.requestOptions});
+            // console.log(response)
+            if(response.statusCode !== 200){
+                throw new Error('Error sending event')
+            }
+            return response.body
+        } catch (err) {
+            throw new Error(err.message)
+        }
+    }
+
+    createEventChannel = async function (oid, eid) {
+        console.log('Create event channel: ' + " OID:"+ oid + ' EID:' + eid)
+        try {
+            const response = await got.post('api/events/local/' + oid + '/' + eid , {...this.requestOptions});
+            // console.log(response)
+            if(response.statusCode !== 200){
+                throw new Error('Error creating event channel')
+            }
+            return response.body
+        } catch (err) {
+            throw new Error(err.message)
+        }
+    }
+
+    removeEventChannel = async function (oid, eid) {
+        console.log('Removing event channel: ' + " OID:"+ oid + ' EID:' + eid)
+        try {
+            const response = await got.delete('api/events/local/' + oid + '/' + eid , {...this.requestOptions});
+            // console.log(response)
+            if(response.statusCode !== 200){
+                throw new Error('Error removing event channel')
+            }
+            return response.body
+        } catch (err) {
+            throw new Error(err.message)
+        }
+    }
+
+    subscribeToEventChannel = async function (id, oid, eid) {
+        console.log('Subscribing to event channel ID: ' + id + " OID: "+ oid + ' EID:' + eid)
+        try {
+            const response = await got.post('api/events/remote/' + id + '/' + oid + '/' + eid , {...this.requestOptions});
+            if(response.statusCode !== 200){
+                throw new Error('Error subscribing event channel')
+            }
+            return response.body
+        } catch (err) {
+            throw new Error(err.message)
+        }
+    }
+    unSubscribeFromEventChannel = async function (id, oid, eid) {
+        console.log('Unsubscribing from event channel: ' + " OID:"+ oid + ' EID:' + eid)
+        try {
+            const response = await got.delete('api/events/remote/' + id + '/' + oid + '/' + eid , {...this.requestOptions});
+            if(response.statusCode !== 200){
+                throw new Error('Error unsubscribing event channel')
+            }
+            return response.body
+        } catch (err) {
+            throw new Error(err.message)
+        }
+    }
+    eventChannelStatus = async function (id, eid) {
+        try {
+            const response = await got.get('api/events/remote/' + id + '/' + eid , {...this.requestOptions});
+            if(response.statusCode !== 200){
+                throw new Error('Error getting event channel status')
+            }
+            return response.body
+        } catch (err) {
+            throw new Error(err.message)
+        }
+    }
+    responseMessageFormat = function (data) {
+        return typeof data != 'object' ? {'value': data } : data
     }
   }
 

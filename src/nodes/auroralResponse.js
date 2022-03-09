@@ -7,12 +7,12 @@ module.exports = function(RED) {
         this.on('input', function(msg, send, done) {
             try {
                 if(msg._auroralReqId == undefined) {
-                    // _auroralReqId is no in message
+                    // _auroralReqId is not in the message
                     this.error('Message is not comming from AuroralRequest node')
                     done(); 
                     return
                 }
-                // encpsulate message if is string or number
+                // encapsulate message if is string or number
                 const payload = typeof msg.payload != 'object' ? {'value': msg.payload } : msg.payload
                 const statusCode = msg.statusCode ? msg.statusCode : 200
                 this.log('Recieving:' + msg._auroralReqId)
@@ -25,7 +25,7 @@ module.exports = function(RED) {
                     res.write(JSON.stringify(payload));
                     res.end()
                 } else {
-                    // object doesnt exists
+                    // object doesn't exists
                     // unexpected error 
                     this.error('Error getting response connection object')
                     done();

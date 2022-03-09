@@ -5,46 +5,62 @@
         color: '#3FADB5',
         defaults: {
             name: { value: "", required: true },
-            adapterId: { value: "", required: true },
+            adapterId: { value: "" },
+            oid: { value: "" },
             agent: { value: "", type: "auroralAgent", required: true },
             regType: { value: "", required: true},
             outputs: { value: 1 },
             inputs: { value: 0 },
             allowInput: { value: false },
+            allowEventSubscription: { value: false },
+            subscribedEvents: {value: []},
+            // subscribedEvents: { value: [{ oid: 'd3a5ddd6-9412-46f3-b822-c96d34d2c5db', eid: 'fire' }] },
             devicetype: { value: 'Device' },
             nop: { value: true },
-            unregistering: { value: false },
-            mergeOutputs: { value: true },
-            td: { value: ' {\n\t"@context": "https://www.w3.org/2019/wot/td/v1",\n\t"title": "", \
-                            \n\t"properties": {\n\t\t"temp": { }\n\t}\n}' },
-            pids: { value: "", required: true}
+            unregistering: { value: true },
+            mergePidOutputs: { value: true },
+            td: { value: ' {\n\t"@context": "https://www.w3.org/2019/wot/td/v1",\n\t"title": ""\n}' },
+            pids: { value: new Array(), required: true },
+            eids: { value: new Array(), required: true },
+            // aids: { value: [], required: true } // actions
         },
         inputLabels: function(index) {
-            return "Request"
-        },
-        outputLabels: function(index) {
-            try {
-                if(!this.mergeOutputs){
-                    if(this.pids.length > index){
-                        return this.pids[index];
-                    } else if(this.pids.length == index && this.allowInput) {
-                        return "Request output"
-                    }
-                } else {
-                    if(index === 0){
-                        return "PIDS"
-                    } else if( index === 1 ){
-                        return "Request output"
-                    } else {
-                        return "unknown "
-                    }
-                }
-            } catch (error) {
-                return "unknown"
+            let node  = this;
+            if(node.allowInput && node.eids.length > 0){
+                return "Event or getProperty"
+            } else if (node.allowInput) {
+                return "getProperty"
+
+            } else if (node.eids.length > 0){
+                return "Event"
             }
         },
+        outputLabels: function(index) {
+            let node  = this;
+            const nInputs = node.allowInput? 1 : 0
+            let labels = []
+            // pids first
+            if(node.pids.length != 0){
+                if(node.mergePidOutputs){
+                    labels.push('Properties')
+                } else {
+                    node.pids.forEach(pid => {
+                        labels.push(pid)
+                    });
+                }
+            }
+            // eids 
+            if(node.allowEventSubscription){
+                labels.push('Subscribed events')
+            }
+            // request
+            if(node.allowInput){
+                labels.push('Request output')
+            }
+            return labels[index]
+        },
         oneditprepare: function (){
-            var node = this;
+            let node  = this;
             // when thing stored
             if(node.adapterId){
                 $("#node-input-adapterId").prop( "disabled", true );
@@ -64,7 +80,6 @@
                 } else{
                     $(".updateItem").show()
                 }
-                // $("#node-input-regType").typedInput('disable');
             } else {
                 //regType
                 $("#node-input-regType").typedInput({
@@ -80,16 +95,19 @@
                     ]
                 })
             }
-
             //nodeRegistered implicitly hidden
             $(".nodeRegistered").hide()
+
             // TD editor
             node.editor = RED.editor.createEditor({
                 id: 'node-input-td-editor',
                 mode: 'ace/mode/json',
                 value: node.td,
             });
-            
+            $("#node-input-oid").prop("disabled", true)
+            if(!node.oid ){
+                $(".displayOid").hide()
+            }
             //on regType change
             $("#node-input-regType" ).change(function() {
                 node.regType=$( "#node-input-regType" ).val()
@@ -100,7 +118,7 @@
                         $(".newItem").hide();
                         $(".preregistered").show();
                         node.name='auroralDevice';
-                        node.pids=[]
+                        node.pids=new Array()
                     } else {
                         $(".appearance").show();
                         $(".updateItem").hide();
@@ -118,13 +136,27 @@
                         $.getJSON('deployed/' + node.id, function(response) {
                             if(response.value){ // node deployed
                                 $(".nodeRegistered").show()
+                                if(response.oid){
+                                    node.oid = response.oid
+                                    $("#node-input-oid").val( response.oid );
+                                    $(".displayOid").show()
+                                    // add ID to TD
+                                    try {
+                                        let td = JSON.parse(node.editor.getValue())
+                                        if(!td.id){
+                                            td.id=node.oid
+                                            node.editor.setValue(JSON.stringify(td, null, 2))
+                                        }
+                                    } catch(err) {
+                                        console.log('Error: ' + err.message)
+                                    }
+                                }
                             }
-                            
                         })
                     }
                 }); 
             });
-            // get td button
+            // button 'get td'
             $("#button-get-td").on("click", function() {
                 $("#button-get-td").html('Getting TD from agent');
                 $("#button-get-td").prop("disabled", true)
@@ -135,13 +167,19 @@
                     $("#button-get-td").html('Get TD from agent');
                     if(!response.error){
                         node.editor.setValue(JSON.stringify(response.td, null, 2))
+                        // save oid 
+                        if(response.td.id !== undefined ){
+                            node.oid = response.td.id
+                            $("#node-input-oid").val( response.td.id );
+                            $(".displayOid").show()
+                        }
                     } else {
                         console.log(response.message)
                         // alert(response.message)
                     }
                 });
             })    
-            // update TD  
+            // button 'update TD'  
             $("#button-update-td").on("click", function() {
                 $("#button-update-td").html('Sending TD to agent');
                 $("#button-update-td").prop("disabled", true)
@@ -153,53 +191,85 @@
                     $("#button-update-td").prop("disabled", false)
                     node.nop=!node.nop
                 })
-                .fail(function() {
-                    alert( "Unable to store TD" );
+                .fail(function(e) {
+                    console.log(e)
+                    alert( "Unable to store TD:" );
                     $("#button-update-td").html('Update TD in agent');
                     $("#button-update-td").prop("disabled", false)
                 });
-            });       
+            }); 
+            // events   
+            $("#node-input-events").typedInput({
+                type:"json",
+                typeField: "#node-input-events-type",
+            });
+            $("#node-input-events").typedInput('hide');
+            $("#node-input-allowEventSubscription").change(function() {
+                node.allowEventSubscription = $("#node-input-allowEventSubscription").is(":checked");
+                if(!node.allowEventSubscription){
+                    $("#node-input-events").typedInput('hide');
+
+                } else{
+                    $("#node-input-events").typedInput('show');
+                }
+            })
+           
+            if(!node.allowEventSubscription){
+                $("#node-input-events").typedInput('hide');
+            } 
+            $("#node-input-events").typedInput('value', JSON.stringify(node.subscribedEvents));
         },
         oneditsave: function () {
-            var node = this;
+            let node  = this;
             // get td and destroy editor
             node.td = node.editor.getValue();
             node.editor.destroy();
             delete node.editor;
-
-            // mergeOutputs
-            const mergeOutputs = $("#node-input-mergeOutputs").is(":checked");
+            // allow input
+            node.allowInput = $("#node-input-allowInput").is(":checked");
+            node.adapterId = $("#node-input-adapterId").val()
+            // allow Event Subscription
+            node.allowEventSubscription = $("#node-input-allowEventSubscription").is(":checked");
             try {
                 // alert('regtype: ' + node.regType)
                 if(node.regType !== 'preregistered') {
                     // alert('Testing ouputs')
-                    const tdJSON = JSON.parse(this.td)
-                    // PIDS and num of PIDS
-                    if(tdJSON.properties){
-                        this.pids = Object.keys(tdJSON.properties)
-                        // alert(this.pids)
-                        // alert(mergeOutputs)
-
-                        node.outputs = mergeOutputs ? 1: this.pids.length 
-                    } else {
-                        node.outputs = 0
-                    }
+                    let tdJSON = JSON.parse(node.td)
+                    tdJSON.adapterId = node.adapterId
+                    node.td = JSON.stringify(tdJSON, null, 2)
+                    // PIDS 
+                    node.pids = tdJSON.properties? Object.keys(tdJSON.properties) : new Array()
+                    // EIDS
+                    node.eids = tdJSON.events? Object.keys(tdJSON.events) : new Array()
                     // get name from TD
                     if(tdJSON.title && (typeof tdJSON.title == 'string' || tdJSON.title instanceof String)) {
-                        this.name = tdJSON.title
+                        node.name = tdJSON.title
                     } else {
-                        this.name = ''
+                        node.name = ''
                     }
                 }
-                
             } catch (error) {
                 console.log(error)
-                node.outputs = 0
+                node.pids = new Array()
+                node.eids = new Array()
             }
-            // allow input
-            node.allowInput = $("#node-input-allowInput").is(":checked");
-            node.inputs = node.allowInput ? 1 : 0
-            node.outputs = node.allowInput ? node.outputs + 1 : node.outputs
+            node.inputs = 0
+            node.outputs = 0
+            // calculate num of outputs
+            if((node.pids).length !== 0){
+                node.outputs += node.mergePidOutputs ? 1 : (node.pids).length
+            }
+            node.outputs += node.allowEventSubscription ? 1 : 0
+            node.outputs += node.allowInput ? 1 : 0
+
+            // calculate num of inputs 
+            if(node.allowInput || node.eids.length > 0) {
+                node.inputs = 1
+            } else {
+                node.inputs = 0
+            }
+            // subscribed events
+            node.subscribedEvents = JSON.parse($("#node-input-events").typedInput('value'))
         },
         oneditcancel: function () {
             const node = this
@@ -215,6 +285,12 @@
 </script>
 
 <script type="text/html" data-template-name="auroralDevice">
+    <!-- <h3>Event TEST</h3>
+    <div class="form-row node-input-event-container">
+        <label for="node-input-regType"><i class="fa fa-cube"></i> Initialisation:</label>
+        <input type="text" id="node-input-regType">
+
+    </div> -->
     <h3> Agent connection</h3>
     <div class="form-row">
         <label for="agent-url"><i class="fa fa-plug"></i> Agent:</label>
@@ -236,53 +312,82 @@
         <label for="node-input-adapterId"><i class="fa fa-cube"></i> AdapterId:</label>
         <input type="text" id="node-input-adapterId" placeholder="node-red_000">
     </div>
+    <div class="form-row displayOid">
+        <label for="node-input-oid"><i class="fa fa-cube"></i> OID:</label>
+        <input type="text" id="node-input-oid">
+    </div>
     <p class="newItem updateItem">Thing description:</p>
     <div class=" newItem updateItem ">
         <label></label>
         <div style="height: 250px; min-height:150px;" class="newItem updateItem node-text-editor" id="node-input-td-editor"></div>
     </div> 
-    <div class=" form-row nodeRegistered">
+    <div class=" form-row nodeRegistered" style="margin-top:5px;">
         <!-- <label></label> -->
         <!-- <label for="node-input-td-editor"><i class="newItem updateItem"></i> Thing description:</label>≠ -->
-        <button type="button" id="button-get-td" class=" red-ui-button" style="margin-left:0px; vertical-align:top; width:auto !important;">Get TD from agent</button>
-        <button type="button" style="background-color: rgba(255, 0, 0, 0.342)" id="button-update-td" class=" red-ui-button" style="margin-left:0px; vertical-align:top; width:auto !important;">Update TD in agent</button>
+        <button type="button" id="button-get-td" class=" red-ui-button" style="background-color: rgba(110, 219, 155, 0.342); margin-left: 0px; vertical-align:top; width:auto !important;">Get TD from agent</button>
+        <button type="button" style="background-color: rgba(110, 219, 155, 0.342)" id="button-update-td" class=" red-ui-button" style="margin-left:0px; vertical-align:top; width:auto !important;">Update TD in agent</button>
     </div>
   
-    <h3 class="appearance">Appearance</h3>
-    <div for="node-input-mergeOutputs" class="appearance form-row">
-        <label class="">Outputs:</label>
-        <input type="checkbox" id="node-input-mergeOutputs" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
-        <label style="margin-left:5px; width:auto !important;" for="node-input-mergeOutputs">Merge to one output</label>
-    </div>
+    <h3 class="appearance">Inputs</h3>
+   
     <div for="node-input-allowInput" class="appearance form-row">
-        <label class="">Inputs:</label>
+        <!-- <label class=""></label> -->
         <input type="checkbox" id="node-input-allowInput" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
-        <label style="margin-left:5px; width:auto !important;" for="node-input-allowInput">Allow input</label>
+        <label style="margin-left:5px; width:auto !important;" for="node-input-allowInput">Allow getProperty</label>
+    </div>
+    <div for="node-input-allowEventSubscription" class="appearance form-row">
+        <!-- <label class=""></label> -->
+        <input type="checkbox" id="node-input-allowEventSubscription" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
+        <label style="margin-left:5px; width:auto !important;" for="node-input-allowEventSubscription">Allow event subscription</label>
+    </div>
+    <div class="form-row subscribeEventsEdit" >
+        <input type="text" id="node-input-events">
+        <input type="hidden" id="node-input-events-type">
     </div>
 </script>
 
 <script type="text/html" data-help-name="auroralDevice">
-    <p>Allows to share data in auroral network</p>
+    <p>Connecting to auroral network</p>
     <h3>Inputs</h3>
     <ol class="node-ports">
-        Input in this node is optional, and can be enabled with "Allow input" checkbox in properities view.
-        When is enabled, you are able to send getProperty requests in AURORAL network. Your requested data will be sent through node's output called "Request output"
-        <dl class="message-properties">
-            <dt>msg.oid <span class="property-type">string</span></dt>
-            <dd>OID of requested device</dd>
-        </dl>
-        <dl class="message-properties">
-            <dt>msg.pid <span class="property-type">string</span></dt>
-            <dd>Property ID of requested device</dd>
-        </dl>
+        Input in this node is optional, and is enabled when "Allow getProperty" checkbox is checked or if registered item has some events defined.
+        <li>
+            When 'getProperty' is enabled, you are able to send getProperty requests in AURORAL network. Your requested data will be retrieved through node's output called "Request output"
+            <dl class="message-properties">
+                <dt>msg.type <span class="property-type">string</span></dt>
+                <dd>property</dd>
+            </dl>
+            <dl class="message-properties">
+                <dt>msg.oid <span class="property-type">string</span></dt>
+                <dd>OID of requested device</dd>
+            </dl>
+            <dl class="message-properties">
+                <dt>msg.pid <span class="property-type">string</span></dt>
+                <dd>Property ID of requested device</dd>
+            </dl>
+        </li>
+        <li>
+            When device has event atribute, you can start these events with passing message containing these values to input:
+            <dl class="message-properties">
+                <dt>msg.type <span class="property-type">string</span></dt>
+                <dd>event</dd>
+            </dl>
+            <dl class="message-properties">
+                <dt>msg.eid <span class="property-type">string</span></dt>
+                <dd>Event id</dd>
+            </dl>
+            <dl class="message-properties">
+                <dt>msg.payload <span class="property-type">string</span></dt>
+                <dd>Data which will be sent</dd>
+            </dl>
+        </li>
     </ol>
     <h3>Outputs</h3>
     <ol class="node-ports">
         This node has multiple outputs.  
-        <li>PIDs -
-            When data are requested from this device, proper output by PID name is used. 
-            There is also possibility to merge them into one, using "merge outputs" checkbox in properities.
-            Each sent message represents data request and contains these properties:
+        <li>Properties -
+           This output sents message when someone requests data from this device. 
+           You needs to enrich message with requested data, and send it to auroralResponse node.
             <dl class="message-properties">
                 <dt>msg.oid <span class="property-type">string</span></dt>
                 <dd>Requested OID</dd>
@@ -301,10 +406,18 @@
             </dl>
         </li>
         <li>Request output -
-          This output is used for sending requested data using 'Request' input.
+          This output contains requested data from other devices (with getProperty input)
             <dl class="message-properties">
                 <dt>msg.payload <span class="property-type">string</span></dt>
                 <dd>Requested data</dd>
+            </dl>
+            <dl class="message-properties">
+                <dt>msg.oid <span class="property-type">string</span></dt>
+                <dd>Requested OID</dd>
+            </dl>
+            <dl class="message-properties">
+                <dt>msg.pid <span class="property-type">string</span></dt>
+                <dd>Requested PID</dd>
             </dl>
         </li>
     </ol>
@@ -314,18 +427,13 @@
     If so, you need to specify adapterId, which was used during registration.
     Once everything is setted up, you can deploy flow. Node status will inform you about process of registration and necessary actions.
     <br>
-    Button "Get TD from agent" will get thing description from agent and use it in this node-red nod.
-    Button "Update TD in agent" will update thing description stored agent with displayed TD.
-    
+    Button <code>Get TD from agent</code> will get thing description from agent and use it in this node-red nod.
+    Button <code>Update TD in agent</code> will update thing description stored agent with displayed TD.
     <h3>Details</h3>
-    This device is registered in Auroral agent with name and adapterId specified in config.
+    This device is registered in Auroral agent with adapterId and TD specified in properties.
     Afterwards, when node is deployed, it is possible to make requests for getting data from devices connected to Auroral network.
     They are addressable by OID and PID, sent in properties <code>msg.oid</code> and <code>msg.pid</code>.
     <h3>Notes</h3>
     <li>You need to enable device in Auroral dashboard before making requests</li>
-    <li>Flow started in this node should end in node auroralResponse, otherwise answer is not sent to Auroral network </li>
-<!-- <h3>References</h3>
-    <ul>
-        <li><a>GitHub</a> - the nodes github repository</li>
-    </ul> -->
+    <li>Properities output needs to end in node auroralResponse, otherwise answer is not sent to Auroral network </li>
 </script>
