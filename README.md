@@ -9,21 +9,32 @@ Developed for AURORAL H2020 project
 Beta version still under testing
 Extended documentation will follow
 
-## Development installation ##
+## Nodes ## 
+There are three nodes:
+- Device 
+   - represents Auroral device
+- Response
+   - for sending requested data back to agent
+- Registrations
+   - for retrieving registration from agent
 
+## Standard mesage format ##
+Auroral message format will be added in future.  
+
+## Development installation ##
  - First option:
     - Described in: https://nodered.org/docs/creating-nodes/first-node in part **Testing your node in Node-RED**
  - Second option:
     - npm install
-    - npm pack
+    - npm pack -> generates tgz file
     - install through UI -> manage pallete and import .tgz
 
 ### Node-red docs ###
 https://nodered.org/docs/
 
-
 ## Known limitations and bugs ##
-- changing PIDS after node is once deployed is not possible (you have to remove and recreate)
+- TD mismatch after depleoying preregistered device ( can be fixed in device properties with get TD from agent button )
+- Changing adapterId after deployment is not allowed
 
 ## Who do I talk to? ##
 
