@@ -84,7 +84,7 @@ module.exports = function(RED) {
                 }   
                 // Unknown OID and PID
                 if(!msg.type){
-                    throw new('Set msg.type')
+                    throw new Error('Set msg.type')
                 }
                 if(msg.type === 'property'){
                     if(!msg.oid){
