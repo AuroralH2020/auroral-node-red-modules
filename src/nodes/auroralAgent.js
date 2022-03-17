@@ -375,11 +375,17 @@ async function processThings(RED, node){
                 node.log(error.message)
             }
             for (const device of devicesWithEventSubscription) {
-                await Promise.all((device.subscribedEvents).map(async (event) => {
-                    if(device.oid){
-                        const eventResponse = await node.agent.subscribeToEventChannel(device.oid, event.oid, event.eid)
-                    }
-                }))
+                try{
+                    await Promise.all((device.subscribedEvents).map(async (event) => {
+                        if(device.oid){
+                            const eventResponse = await node.agent.subscribeToEventChannel(device.oid, event.oid, event.eid)
+                        }
+                    }))
+                } catch(err) {
+                    device.node.emit('registrationStatus', {type: 'error', message: 'Event is not subscribable'});
+                    node.error(err)
+                }
+                
             }
         }
     } catch (error){

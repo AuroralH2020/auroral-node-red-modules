@@ -22,7 +22,12 @@ class Agent {
     getRegistrations = async function () {
         try {
             const response = await got.get('api/registration/', this.requestOptions);
-            return response.body
+            if(response) {
+                if(response.statusCode == 200) {
+                    return response.body.message
+                }
+                throw new Error('StatusCode:' + response.body.statusCode)
+            }
         } catch (error) {
             throw new Error('Error getting registrations: ' + error)
         }
@@ -31,7 +36,12 @@ class Agent {
     getRegistration = async function (id) {
         try {
             const response = await got.get('api/registration/' + id, this.requestOptions);
-            return response.body
+            if(response) {
+                if(response.statusCode == 200) {
+                    return response.body.message
+                }
+                throw new Error('StatusCode:' + response.body.statusCode)
+            }
         } catch (error) {
             throw new Error('Error getting registration: ' + error)
         }
@@ -41,11 +51,14 @@ class Agent {
         // console.log('get registration by adapterId')
         try{
             const response = await got.get('api/registration/oid/' + adapterId,  {...this.requestOptions, responseType: 'text'});
-            if(response.body){
-                const device = await this.getRegistration(response.body)
-                return {...device, oid: response.body}
-            } else {
-               return null
+            if(response.statusCode === 200) {
+                const body = JSON.parse(response.body)
+                if(body.message){
+                    const device = await this.getRegistration(body.message)
+                    return {...device, oid: body.message}
+                } else {
+                   return null
+                }
             }
         } catch(error) {
             throw new Error('Error getting registration by adapterId: ' + error)
@@ -53,12 +66,14 @@ class Agent {
     }
     // returns thing description
     getTd = async function (id) {
+        console.log('getting thing')
         try {
             const response = await got.get('api/discovery/local/td/' + id, this.requestOptions);
+            console.log(response.body)
             if(response.statusCode !== 200){
                 throw new Error('Error getting TD from agent')
             }
-            return response.body
+            return response.body.message
         } catch (error) {
             throw new Error('Error getting TD from agent')
         }
@@ -71,7 +86,7 @@ class Agent {
             if(response.statusCode >= 400){
                 throw new Error(response.message)
             }
-            return response.body
+            return response.body.message
         } catch (error) {
             throw new Error('Error new registration: ' + error)
         }
@@ -82,19 +97,23 @@ class Agent {
             if(!obj.td.id){
                 throw new Error('TD update - ID is missing')
             }
-            console.log('Updating TD: ' + obj.id )
+            console.log('Updating TD: ' + obj.td.id )
             const response = await got.put('api/registration/', {...this.requestOptions, json: obj});
-            return response.body
+            return response.body.message
         } catch (error) {
             throw new Error('Error updating registration: ' + error)
         }
     }
     // removing registration
     removeRegistrations = async function (oids) {
-        // console.log('Removing registration: ' + oids)
+        console.log('Removing registration: ' + oids)
         try {
             const response = await got.post('api/registration/remove' , {...this.requestOptions, json: {oids: oids}});
-            return response.body
+            if(response.statusCode == 200) {
+                return response.body.message
+            } else {
+                throw new Error('statusCode: ' + response.statusCode)
+            }
         } catch (error) {
             throw new Error('Error removing registration: ' + error)
         }
@@ -108,7 +127,7 @@ class Agent {
             if(response.statusCode !== 200){
                 throw new Error('Error getting properties from agent')
             }
-            return response.body
+            return response.body.message
         } catch (error) {
             throw new Error('Error getting properties: ' + error)
         }
@@ -122,7 +141,7 @@ class Agent {
             if(response.statusCode !== 200){
                 throw new Error('Error sending event')
             }
-            return response.body
+            return response.body.message
         } catch (err) {
             throw new Error(err.message)
         }
@@ -136,7 +155,7 @@ class Agent {
             if(response.statusCode !== 200){
                 throw new Error('Error creating event channel')
             }
-            return response.body
+            return response.body.message
         } catch (err) {
             throw new Error(err.message)
         }
@@ -150,7 +169,7 @@ class Agent {
             if(response.statusCode !== 200){
                 throw new Error('Error removing event channel')
             }
-            return response.body
+            return response.body.message
         } catch (err) {
             throw new Error(err.message)
         }
@@ -163,7 +182,7 @@ class Agent {
             if(response.statusCode !== 200){
                 throw new Error('Error subscribing event channel')
             }
-            return response.body
+            return response.body.message
         } catch (err) {
             throw new Error(err.message)
         }
@@ -175,7 +194,7 @@ class Agent {
             if(response.statusCode !== 200){
                 throw new Error('Error unsubscribing event channel')
             }
-            return response.body
+            return response.body.message
         } catch (err) {
             throw new Error(err.message)
         }
@@ -186,7 +205,7 @@ class Agent {
             if(response.statusCode !== 200){
                 throw new Error('Error getting event channel status')
             }
-            return response.body
+            return response.body.message
         } catch (err) {
             throw new Error(err.message)
         }
