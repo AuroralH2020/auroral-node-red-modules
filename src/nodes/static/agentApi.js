@@ -124,7 +124,7 @@ class Agent {
         try {
             const response = await got.get('api/properties/'+id+'/'+oid+'/'+pid , {...this.requestOptions});
             // console.log(response)
-            if(response.statusCode !== 200){
+            if(response.statusCode !== 200 || !response.body.message){
                 throw new Error('Error getting properties from agent')
             }
             return response.body.message

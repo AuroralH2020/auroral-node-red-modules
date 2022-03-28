@@ -51,17 +51,13 @@ module.exports = function(RED) {
         this.on('propertyRequest', function(obj) {
             const node = this
             node.log('Property request in node: ' + node.name)
-            this.send(obj);
+            this.sendMessage(obj, undefined, undefined)
         });
         // incoming request
         this.on('eventRequest', function(obj) {
             const node = this
             node.log('Event request in node: ' + node.name)
-            if(node.config.pids.length > 0){
-                this.send([[],obj]);
-            } else {
-                this.send(obj);
-            }
+            this.sendMessage(undefined, obj, undefined)
         });
         
         // device registration status has changed
@@ -101,9 +97,9 @@ module.exports = function(RED) {
                         try {
                             const requestedData = await node.agentNode.agent.getProperties(node.oid, msg.oid, msg.pid)
                             if(requestedData){
-                                send({payload: requestedData, oid: msg.oid, pid: msg.pid})
+                                node.sendMessage(undefined, undefined, {payload: requestedData, oid: msg.oid, pid: msg.pid})
                             } else {
-                                throw new Error('Timeout')
+                                throw new Error('Error requesting data from agent')
                             }
                         } catch (error) {
                             node.error('ERROR:' + error)
@@ -152,6 +148,23 @@ module.exports = function(RED) {
             }
             done();
         });
+        // sending message to proper output  (based on nodes properties)
+        this.sendMessage = function (propRequest, subEvent, reqPropResponse) {
+            propRequest = propRequest ? propRequest : []
+            subEvent = subEvent ? subEvent : []
+            reqPropResponse = reqPropResponse ? reqPropResponse : []
+            let msg = []
+            if(this.config.pids.length > 0 ) {
+                msg.push(propRequest)
+            } 
+            if(this.config.allowEventSubscription){
+                msg.push(subEvent)
+            }
+            if(this.config.allowInput){
+                msg.push(reqPropResponse)
+            }
+            this.send(msg)
+        }
     }
     RED.nodes.registerType("auroralDevice", AuroralDevice);
 }
