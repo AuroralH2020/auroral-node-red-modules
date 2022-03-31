@@ -246,7 +246,7 @@ function incomingServerRequest(req, res, node) {
             res.writeHead(200, {'Content-Type': 'application/json'});
             res.end();
             return
-        } else if (req.method === 'GET' && url[2] === 'property') {
+        } else if ((req.method === 'GET' || req.method === 'PUT' ) && url[2] === 'property') {
             // get OID and PID from request
             const reqOid = url[3]
             const reqPid = url[4]
@@ -276,7 +276,12 @@ function incomingServerRequest(req, res, node) {
 
             // send message to request 
             node.log('Sending request to node ' + reqId)
-            targetDevice.node.emit('propertyRequest', {'_auroralReqId': reqId, pid: reqPid, oid: reqOid, 'adapterId': targetDevice.adapterId})
+            if(req.method === 'PUT'){
+                targetDevice.node.emit('propertyRequest', {'_auroralReqId': reqId, pid: reqPid, oid: reqOid, 'adapterId': targetDevice.adapterId, payload: JSON.parse(req.body)}, )
+            } else {
+                targetDevice.node.emit('propertyRequest', {'_auroralReqId': reqId, pid: reqPid, oid: reqOid, 'adapterId': targetDevice.adapterId} )
+            }
+
             // timeout if request is not answered
             setTimeout(async function(){
                 // get requests from global storage

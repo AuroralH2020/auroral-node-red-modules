@@ -7,9 +7,8 @@ module.exports = function(RED) {
         this.on('input',  async function(msg, send, done) {
             const node = this
             try {
-                (async function() {
-                    const agentNode = RED.nodes.getNode(config.agent);
-                    const registrations = await agentNode.agent.getRegistrations()
+                const agentNode = RED.nodes.getNode(config.agent);
+                const registrations = await agentNode.agent.getRegistrations()
                 if(!registrations){
                     node.error('Agent is offline')
                     return
@@ -24,9 +23,8 @@ module.exports = function(RED) {
                 if(regDetails){
                     send({payload: regDetails})
                 }
-                })();
             } catch (error) {
-                this.error('ERROR:' + error)
+                node.error(error)
                 done();
             }
         });

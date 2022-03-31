@@ -71,7 +71,7 @@ module.exports = function(RED) {
             }
         });
         // msg on input
-        this.on('input', function(msg, send, done) {
+        this.on('input', async function(msg, send, done) {
             const node = this
             try {
                 //  NOT READY
@@ -93,20 +93,23 @@ module.exports = function(RED) {
                         throw new Error('Set msg.pid')
                     }
                     // get requested data
-                    (async function() {
-                        try {
-                            const requestedData = await node.agentNode.agent.getProperties(node.oid, msg.oid, msg.pid)
-                            if(requestedData){
-                                node.sendMessage(undefined, undefined, {payload: requestedData, oid: msg.oid, pid: msg.pid})
-                            } else {
-                                throw new Error('Error requesting data from agent')
-                            }
-                        } catch (error) {
-                            node.error('ERROR:' + error)
-                            done();
-                            return;
+                    try {
+                        let requestedData
+                        if(msg.payload) {
+                            requestedData = await node.agentNode.agent.putProperties(node.oid, msg.oid, msg.pid, msg.payload)
+                        } else (
+                            requestedData = await node.agentNode.agent.getProperties(node.oid, msg.oid, msg.pid)
+                        )
+                        if(requestedData){
+                            node.sendMessage(undefined, undefined, {payload: requestedData, oid: msg.oid, pid: msg.pid})
+                        } else {
+                            throw new Error('Error requesting data from agent')
                         }
-                    })();
+                    } catch (error) {
+                        node.error('ERROR:' + error)
+                        done();
+                        return;
+                    }
                 } else if ( msg.type === 'event'){
                     if(!msg.eid){
                         throw new Error('Set msg.eid')
@@ -116,16 +119,14 @@ module.exports = function(RED) {
                         throw new Error('Eid is not registered')
                     }
                     // send event
-                    (async function() {
-                        try {
-                            const payload = node.agentNode.agent.responseMessageFormat(msg.payload) 
-                            await node.agentNode.agent.sendEventToChannel(node.oid, msg.eid, payload)
-                        } catch (error) {
-                            node.error('ERROR:' + error)
-                            done();
-                            return;
-                        }
-                    })();
+                    try {
+                        const payload = node.agentNode.agent.responseMessageFormat(msg.payload) 
+                        await node.agentNode.agent.sendEventToChannel(node.oid, msg.eid, payload)
+                    } catch (error) {
+                        node.error('ERROR:' + error)
+                        done();
+                        return;
+                    }
                 } else {
                     throw new Error('Unknown type')
                 }

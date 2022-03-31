@@ -118,11 +118,26 @@ class Agent {
             throw new Error('Error removing registration: ' + error)
         }
     }
-    // removing registration
+    // getting properties
     getProperties = async function (id, oid, pid) {
         console.log('Getting property as ID:' + id + " OID:"+ oid + ' PID:' + pid)
         try {
             const response = await got.get('api/properties/'+id+'/'+oid+'/'+pid , {...this.requestOptions});
+            // console.log(response)
+            if(response.statusCode !== 200 || !response.body.message){
+                throw new Error('Error getting properties from agent')
+            }
+            return response.body.message
+        } catch (error) {
+            throw new Error('Error getting properties: ' + error)
+        }
+    }
+
+    // getting properties
+    putProperties = async function (id, oid, pid, payload) {
+        console.log('Getting property as ID:' + id + " OID:"+ oid + ' PID:' + pid)
+        try {
+            const response = await got.put('api/properties/'+id+'/'+oid+'/'+pid , {...this.requestOptions, json: this.responseMessageFormat(payload)});
             // console.log(response)
             if(response.statusCode !== 200 || !response.body.message){
                 throw new Error('Error getting properties from agent')

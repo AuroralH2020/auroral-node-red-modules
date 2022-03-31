@@ -27,9 +27,9 @@
         inputLabels: function(index) {
             let node  = this;
             if(node.allowInput && node.eids.length > 0){
-                return "Event or getProperty"
+                return "Event or interaction with remote property"
             } else if (node.allowInput) {
-                return "getProperty"
+                return "Interaction with remote property"
 
             } else if (node.eids.length > 0){
                 return "Event"
@@ -55,7 +55,7 @@
             }
             // request
             if(node.allowInput){
-                labels.push('Request output')
+                labels.push('Property interaction output')
             }
             return labels[index]
         },
@@ -333,7 +333,7 @@
     <div for="node-input-allowInput" class="appearance form-row">
         <!-- <label class=""></label> -->
         <input type="checkbox" id="node-input-allowInput" style="margin-left:0px; vertical-align:top; width:auto !important;"> 
-        <label style="margin-left:5px; width:auto !important;" for="node-input-allowInput">Allow getProperty</label>
+        <label style="margin-left:5px; width:auto !important;" for="node-input-allowInput">Allow interaction with remote properties</label>
     </div>
     <div for="node-input-allowEventSubscription" class="appearance form-row">
         <!-- <label class=""></label> -->
@@ -350,9 +350,10 @@
     <p>Connecting to auroral network</p>
     <h3>Inputs</h3>
     <ol class="node-ports">
-        Input in this node is optional, and is enabled when "Allow getProperty" checkbox is checked or if registered item has some events defined.
+        Input in this node is optional, and is enabled when "Interaction with remote property" checkbox is checked or if registered item has some events defined.
         <li>
-            When 'getProperty' is enabled, you are able to send getProperty requests in AURORAL network. Your requested data will be retrieved through node's output called "Request output"
+            When 'Interaction with remote property' is enabled, you are able to send getProperty or putProperty requests in AURORAL network. Your requested data will be retrieved through node's output called "Property interaction output".
+            For messages without msg.property GET property request is used and for these with msg.payload PUT property request is chosen.
             <dl class="message-properties">
                 <dt>msg.type <span class="property-type">string</span></dt>
                 <dd>property</dd>
@@ -386,7 +387,7 @@
     <ol class="node-ports">
         This node has multiple outputs.  
         <li>Properties -
-           This output sents message when someone requests data from this device. 
+           This output is used when someone requests data from this device. 
            You needs to enrich message with requested data, and send it to auroralResponse node.
             <dl class="message-properties">
                 <dt>msg.oid <span class="property-type">string</span></dt>
@@ -405,8 +406,8 @@
                 <dd>request id, used in auroralResponse</dd>
             </dl>
         </li>
-        <li>Request output -
-          This output contains requested data from other devices (with getProperty input)
+        <li>Property interaction output -
+          This output contains requested data from other devices (with 'Interaction with remote property' input)
             <dl class="message-properties">
                 <dt>msg.payload <span class="property-type">string</span></dt>
                 <dd>Requested data</dd>
