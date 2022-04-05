@@ -96,12 +96,13 @@ module.exports = function(RED) {
                     try {
                         let requestedData
                         if(msg.payload) {
-                            requestedData = await node.agentNode.agent.putProperties(node.oid, msg.oid, msg.pid, msg.payload)
+                            const payload = node.agentNode.agent.responseMessageFormat(msg.payload) 
+                            requestedData = await node.agentNode.agent.putProperties(node.oid, msg.oid, msg.pid, payload)
                         } else (
                             requestedData = await node.agentNode.agent.getProperties(node.oid, msg.oid, msg.pid)
                         )
                         if(requestedData){
-                            node.sendMessage(undefined, undefined, {payload: requestedData, oid: msg.oid, pid: msg.pid})
+                            node.sendMessage(undefined, undefined, {...msg, payload: requestedData, oid: msg.oid, pid: msg.pid})
                         } else {
                             throw new Error('Error requesting data from agent')
                         }
