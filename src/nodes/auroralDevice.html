@@ -366,6 +366,10 @@
                 <dt>msg.pid <span class="property-type">string</span></dt>
                 <dd>Property ID of requested device</dd>
             </dl>
+            <dl class="message-properties">
+                <dt>msg.payload <span class="property-type">object or string</span></dt>
+                <dd>If provided - putRequest will be used. Otherwise getProperty</dd>
+            </dl>
         </li>
         <li>
             When device has event atribute, you can start these events with passing message containing these values to input:

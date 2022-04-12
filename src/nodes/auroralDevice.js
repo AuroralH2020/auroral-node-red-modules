@@ -121,8 +121,7 @@ module.exports = function(RED) {
                     }
                     // send event
                     try {
-                        const payload = node.agentNode.agent.responseMessageFormat(msg.payload) 
-                        await node.agentNode.agent.sendEventToChannel(node.oid, msg.eid, payload)
+                        await node.agentNode.agent.sendEventToChannel(node.oid, msg.eid, msg.payload)
                     } catch (error) {
                         node.error('ERROR:' + error)
                         done();

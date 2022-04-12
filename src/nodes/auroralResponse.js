@@ -12,8 +12,6 @@ module.exports = function(RED) {
                     done(); 
                     return
                 }
-                // encapsulate message if is string or number
-                const payload = typeof msg.payload != 'object' ? {'value': msg.payload } : msg.payload
                 const statusCode = msg.statusCode ? msg.statusCode : 200
                 this.log('Recieving:' + msg._auroralReqId)
                 // get requests from global storage
@@ -21,8 +19,14 @@ module.exports = function(RED) {
                 if(auroral_requests[msg._auroralReqId] !== undefined) {
                     // send payload and end request
                     const res = auroral_requests[msg._auroralReqId].res
-                    res.writeHead(statusCode, {'Content-Type': 'application/json'});
-                    res.write(JSON.stringify(payload));
+                    if (typeof msg.payload === 'object') 
+                    {
+                        res.writeHead(statusCode, {'Content-Type': 'application/json'});
+                        res.write(JSON.stringify(msg.payload));
+                    } else {
+                        res.writeHead(statusCode, {'Content-Type': 'text/plain'});
+                        res.write(msg.payload);
+                    }
                     res.end()
                 } else {
                     // object doesn't exists

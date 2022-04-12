@@ -17,6 +17,21 @@ class Agent {
                 response: config.agentTimeout
             }
         };
+        this.requestOptionsText = {
+            prefixUrl: baseUrl,
+            responseType: 'text',
+            username,
+            headers:{ 
+                "Content-Type": "text/plain"
+            },
+            password,
+            https: {
+                rejectUnauthorized: ignoreCertificate? false : true,
+            },
+            timeout: {
+                response: config.agentTimeout
+            }
+        };
     }
     // get all registrations from agent
     getRegistrations = async function () {
@@ -151,7 +166,12 @@ class Agent {
     sendEventToChannel = async function (oid, eid, data) {
         console.log('Sending event to channel: ' + " OID:"+ oid + ' EID:' + eid + ' DATA: '+ data)
         try {
-            const response = await got.put('api/events/local/' + oid + '/' + eid , {json: data, ...this.requestOptions});
+            let response
+            if (typeof data === "string") {
+                response = await got.put('api/events/local/' + oid + '/' + eid , { body: data, ...this.requestOptionsText});
+            } else {
+                response = await got.put('api/events/local/' + oid + '/' + eid , { body: JSON.stringify(data), ...this.requestOptionsText});
+            }
             // console.log(response)
             if(response.statusCode !== 200){
                 throw new Error('Error sending event')
@@ -226,7 +246,8 @@ class Agent {
         }
     }
     responseMessageFormat = function (data) {
-        return typeof data != 'object' ? {'value': data } : data
+        // return typeof data != 'object' ? {'value': data } : data
+        return data
     }
   }
 

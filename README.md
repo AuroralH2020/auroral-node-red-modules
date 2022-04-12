@@ -30,7 +30,7 @@ Auroral message format will be added in future.
     - install through UI -> manage pallete and import .tgz
 
 ## Example flow ##
-![Example flow](resources/flow_caption.png?raw=true)
+![Example flow](https://github.com/AuroralH2020/auroral-node-red-modules/blob/master/resources/flow_caption.png?raw=true)
 
 ## Example of ThingDescription ##
 

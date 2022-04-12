@@ -23,7 +23,7 @@ docker buildx build --platform ${PLATFORMS} \
                     --tag ${REGISTRY}/${IMAGE_NAME}:${ENV} \
                     --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                     --build-arg BUILD_VERSION=${VERSION} \
-                    --build-arg NODE_VERSION=12 \
+                    --build-arg NODE_VERSION=14 \
                     --build-arg NODE_RED_VERSION=${NODE_RED_VERSION} \
                     -f Dockerfile . --push
 
@@ -33,7 +33,7 @@ docker buildx build --platform ${PLATFORMS} \
                     --tag ${REGISTRY}/${IMAGE_NAME}:${ENV} \
                     --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                     --build-arg BUILD_VERSION=${VERSION} \
-                    --build-arg NODE_VERSION=12 \
+                    --build-arg NODE_VERSION=14 \
                     --build-arg NODE_RED_VERSION=${NODE_RED_VERSION} \
                     -f Dockerfile . --push
 
