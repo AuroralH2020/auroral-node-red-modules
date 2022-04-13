@@ -25,7 +25,7 @@ module.exports = function(RED) {
                         res.write(JSON.stringify(msg.payload));
                     } else {
                         res.writeHead(statusCode, {'Content-Type': 'text/plain'});
-                        res.write(msg.payload);
+                        res.write(String(msg.payload));
                     }
                     res.end()
                 } else {

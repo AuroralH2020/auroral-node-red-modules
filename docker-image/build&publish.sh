@@ -8,7 +8,7 @@ echo "#########################################################################"
 PLATFORMS=linux/amd64,linux/arm64,linux/arm/v7
 
 # Github configuration
-ENV=1.0 # CHANGE ME IF NEEDED!!!
+ENV=2.0 # CHANGE ME IF NEEDED!!!
 REGISTRY=ghcr.io
 IMAGE_NAME=auroralh2020/auroral-node-red
 
