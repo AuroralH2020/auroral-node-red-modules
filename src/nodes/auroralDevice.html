@@ -65,7 +65,9 @@
             if(node.adapterId){
                 $("#node-input-adapterId").prop( "disabled", true );
                 $("#node-input-regType").prop( "disabled", true );
-                $("#node-input-agent").prop( "disabled", true );
+                if(node.agent) {
+                    $("#node-input-agent").prop( "disabled", true );
+                }
                 // $("#node-input-regType").val( "update" );
                 $(".div-regType").hide();
                 $(".newItem").hide()

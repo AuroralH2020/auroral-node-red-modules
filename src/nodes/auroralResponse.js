@@ -8,7 +8,7 @@ module.exports = function(RED) {
             try {
                 if(msg._auroralReqId == undefined) {
                     // _auroralReqId is not in the message
-                    this.error('Message is not comming from AuroralRequest node')
+                    this.error('Message is not comming from AuroralRequest node ( missing _auroralReqId )')
                     done(); 
                     return
                 }
@@ -19,14 +19,8 @@ module.exports = function(RED) {
                 if(auroral_requests[msg._auroralReqId] !== undefined) {
                     // send payload and end request
                     const res = auroral_requests[msg._auroralReqId].res
-                    if (typeof msg.payload === 'object') 
-                    {
-                        res.writeHead(statusCode, {'Content-Type': 'application/json'});
-                        res.write(JSON.stringify(msg.payload));
-                    } else {
-                        res.writeHead(statusCode, {'Content-Type': 'text/plain'});
-                        res.write(String(msg.payload));
-                    }
+                    res.writeHead(statusCode, {'Content-Type': 'application/json'});
+                    res.write(JSON.stringify(msg.payload));
                     res.end()
                 } else {
                     // object doesn't exists

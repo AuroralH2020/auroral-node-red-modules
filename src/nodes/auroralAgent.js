@@ -188,10 +188,17 @@ async function compareAndUpdate(local, agent){
         if(!agent.properties){
             agent.properties=[]
         }
-        if(JSON.stringify(local.properties)  != JSON.stringify(agent.properties)){
-            console.log("Diff is :" + JSON.stringify(local.properties) + " " + JSON.stringify(agent.properties))
+        
+        const localProps = JSON.stringify(local.properties, Object.keys(local.properties).sort())
+        const remoteProps = JSON.stringify(agent.properties, Object.keys(agent.properties).sort())
+        if( localProps != remoteProps ){
+            console.log("Diff is :" + localProps + " " + remoteProps)
             return true;
         }
+        // if(JSON.stringify(local.properties)  != JSON.stringify(agent.properties)){
+        //     console.log("Diff is :" + JSON.stringify(local.properties) + " " + JSON.stringify(agent.properties))
+        //     return true;
+        // }
         if(!agent.events){
             agent.events=[]
         }
@@ -253,7 +260,8 @@ function incomingServerRequest(req, res, node) {
             let targetDevice = undefined
             // try to find OID in stored devices
             for (const device of node.devices) {
-                if(device.oid == reqOid && device.properties.includes(reqPid)){
+                // test if OID & PID matches (including getAll + getHistorical)
+                if(device.oid == reqOid && [...device.properties, 'getAll', 'getHistorical'].includes(reqPid)){
                     targetDevice = device
                 }
             }
@@ -261,7 +269,7 @@ function incomingServerRequest(req, res, node) {
             if(!targetDevice) {
                 node.error('OID/PID not found ['+reqOid + ', ' + reqPid+']')
                 res.writeHead(400, {'Content-Type': 'application/json'});
-                res.write(JSON.stringify({'err': 'Combination of OID and PID not found ['+reqOid + ', ' + reqPid+']'}));
+                res.write(JSON.stringify({'err': 'Combination of OID and PID not found ['+ reqOid + ', ' + reqPid+']'}));
                 res.end();
                 return
             }
