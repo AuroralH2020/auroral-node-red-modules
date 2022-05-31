@@ -353,12 +353,14 @@ async function processThings(RED, node){
                             node.log('Device: '+ device.adapterId + ' - now registered [' + response[0].oid +']')
                             device.oid = response[0].oid
                             device.node.oid=response[0].oid
-                            device.node.emit('registrationStatus', {type: 'ok', message: 'Registered'});
+                            // device.node.emit('registrationStatus', {type: 'ok', message: 'Registered'});
+                            // Disabled by default
+                            device.node.emit('registrationStatus', {type: 'warn', message: 'Registered - not enabled'});
                         }
                     } else {
                         // preregistration -> send error and does not process
                         node.log('Preregistered device is not registered: ' + device.adapterId + " - waiting")
-                        device.node.emit('registrationStatus', { type: 'error', message: 'Please register thing in agent' });
+                        device.node.emit('registrationStatus', {type: 'error', message: 'Please register thing in agent' });
                     }
                 } else {
                     // device is registered in agent
@@ -372,7 +374,11 @@ async function processThings(RED, node){
                         device.oid = agentDevice.oid
                         device.node.oid=agentDevice.oid
                         node.log('Device: '+ device.name + ' - ready')
-                        device.node.emit('registrationStatus', {type: 'ok', message: 'Registered'});
+                        if(agentDevice.status == 'Enabled'){
+                            device.node.emit('registrationStatus', {type: 'ok', message: 'Registered'});
+                        } else {
+                            device.node.emit('registrationStatus', {type: 'warn', message: 'Registered - not enabled'});
+                        }
                     }
                 }
                 // register events

@@ -67,7 +67,7 @@ module.exports = function(RED) {
             } else if (status.type === 'ok') {
                 this.status({ fill:"green", shape:"dot", text: status.message });
             } else {
-                this.status({ fill:"orange", shape:"dot", text: status.message });
+                this.status({ fill:"yellow", shape:"dot", text: status.message });
             }
         });
         // msg on input
