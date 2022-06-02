@@ -15,13 +15,30 @@
             "auroralDevice": "./src/nodes/auroralDevice.js"
         }
     },
-    "license": "MIT",
     "keywords": [
-        "node-red"
+        "node-red",
+        "auroral"
     ],
+    "contributors": [
+        {
+            "name": "Peter Drahovsky",
+            "url": "https://github.com/xdraho11"
+        },
+        {
+            "name": "Jorge Almela",
+            "url": "https://github.com/Joralmi"
+        }
+    ],
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/AuroralH2020/auroral-node-red-modules/issues"
+    },
     "dependencies": {
         "got": "^11.8.3",
         "stoppable": "^1.1.0",
         "uuid": "^8.3.2"
+    },
+    "engines": {
+        "node": ">=12.0.0"
     }
 }

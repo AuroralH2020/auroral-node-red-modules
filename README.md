@@ -19,7 +19,8 @@ There are three nodes:
    - for retrieving registration from agent
 
 ## Standard mesage format ##
-Auroral message format will be added in future.  
+Auroral Agent is by default extending messages using mapping, which is generated from Thing description. This ensures sent message will be sent in standart Auroral format.
+From Node-RED you just need to pass simple value [string, number, object or array], which was choosen during registration (in Thing description)
 
 ## Development installation ##
  - First option:
