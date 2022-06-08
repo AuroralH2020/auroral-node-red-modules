@@ -166,12 +166,7 @@ class Agent {
     sendEventToChannel = async function (oid, eid, data) {
         console.log('Sending event to channel: ' + " OID:"+ oid + ' EID:' + eid + ' DATA: '+ data)
         try {
-            let response
-            if (typeof data === "string") {
-                response = await got.put('api/events/local/' + oid + '/' + eid , { body: data, ...this.requestOptionsText});
-            } else {
-                response = await got.put('api/events/local/' + oid + '/' + eid , { body: JSON.stringify(data), ...this.requestOptionsText});
-            }
+            const response = await got.put('api/events/local/' + oid + '/' + eid , { json: JSON.stringify(data), ...this.requestOptionsText});
             // console.log(response)
             if(response.statusCode !== 200){
                 throw new Error('Error sending event')
