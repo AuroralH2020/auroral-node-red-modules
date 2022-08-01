@@ -215,21 +215,26 @@ async function compareAndUpdate(local, agent){
 function incomingServerRequest(req, res, node) {
     // imports
     var uuid = require('uuid');
-    const url = req.url.split('/')
+    var url = require('url');
+    
     try {
         // /api/property/:oid/:pid
         // /api/event/:oid/:eid
-        if( url.length < 5 || url[1] != 'api'){
+        const urlObject = url.parse(req.url, true)
+        const path = urlObject.pathname.split('/')
+        
+        if( path.length < 5 || path[1] != 'api'){
             // Error
-            node.error('Bad params: '+ url)
+            node.error('Bad params: '+ path)
             res.writeHead(400, {'Content-Type': 'application/json'});
             res.write(JSON.stringify({'err': "Bad request"}));
             res.end();
             return
         }
-        if(req.method === 'PUT' && url[2] === 'event') {
-            const reqOid = url[3]
-            const reqEid = url[4]
+        
+        if(req.method === 'PUT' && path[2] === 'event') {
+            const reqOid = path[3]
+            const reqEid = path[4]
             let targetDevice = undefined
             let sourceOid = undefined
             for (const device of node.devices) {
@@ -253,10 +258,10 @@ function incomingServerRequest(req, res, node) {
             res.writeHead(200, {'Content-Type': 'application/json'});
             res.end();
             return
-        } else if ((req.method === 'GET' || req.method === 'PUT' ) && url[2] === 'property') {
+        } else if ((req.method === 'GET' || req.method === 'PUT' ) && path[2] === 'property') {
             // get OID and PID from request
-            const reqOid = url[3]
-            const reqPid = url[4]
+            const reqOid = path[3]
+            const reqPid = path[4]
             let targetDevice = undefined
             // try to find OID in stored devices
             for (const device of node.devices) {
@@ -285,12 +290,12 @@ function incomingServerRequest(req, res, node) {
             // send message to request 
             node.log('Sending request to node ' + reqId)
             if(req.method === 'PUT'){
-                targetDevice.node.emit('propertyRequest', {'_auroralReqId': reqId, pid: reqPid, oid: reqOid, 'adapterId': targetDevice.adapterId, payload: JSON.parse(req.body)}, )
+                targetDevice.node.emit('propertyRequest', {'_auroralReqId': reqId, pid: reqPid, oid: reqOid, adapterId: targetDevice.adapterId, payload: JSON.parse(req.body), queryParams: urlObject.query} )
             } else {
-                targetDevice.node.emit('propertyRequest', {'_auroralReqId': reqId, pid: reqPid, oid: reqOid, 'adapterId': targetDevice.adapterId} )
+                targetDevice.node.emit('propertyRequest', {'_auroralReqId': reqId, pid: reqPid, oid: reqOid, adapterId: targetDevice.adapterId, queryParams: urlObject.query} )
             }
 
-            // timeout if request is not answered
+            // timeout if request is not answereds
             setTimeout(async function(){
                 // get requests from global storage
                 var auroral_requests = (node.context().global).get('auroral_requests')

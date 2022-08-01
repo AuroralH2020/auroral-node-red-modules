@@ -92,14 +92,17 @@ module.exports = function(RED) {
                     if(!msg.pid){
                         throw new Error('Set msg.pid')
                     }
+                    if(msg.queryParams && typeof(msg.queryParams) !== 'object'){
+                        throw new Error('msg.queryParams needs to be object')
+                    }
                     // get requested data
                     try {
                         let requestedData
                         if(msg.payload) {
                             const payload = node.agentNode.agent.responseMessageFormat(msg.payload) 
-                            requestedData = await node.agentNode.agent.putProperties(node.oid, msg.oid, msg.pid, payload)
+                            requestedData = await node.agentNode.agent.putProperties(node.oid, msg.oid, msg.pid, payload, msg.queryParams)
                         } else (
-                            requestedData = await node.agentNode.agent.getProperties(node.oid, msg.oid, msg.pid)
+                            requestedData = await node.agentNode.agent.getProperties(node.oid, msg.oid, msg.pid, msg.queryParams)
                         )
                         if(requestedData){
                             node.sendMessage(undefined, undefined, {...msg, payload: requestedData, oid: msg.oid, pid: msg.pid})

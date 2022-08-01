@@ -134,10 +134,10 @@ class Agent {
         }
     }
     // getting properties
-    getProperties = async function (id, oid, pid) {
+    getProperties = async function (id, oid, pid, query) {
         console.log('Getting property as ID:' + id + " OID:"+ oid + ' PID:' + pid)
         try {
-            const response = await got.get('api/properties/'+id+'/'+oid+'/'+pid , {...this.requestOptions});
+            const response = await got.get('api/properties/'+id+'/'+oid+'/'+pid , {...this.requestOptions, searchParams: query})
             // console.log(response)
             if(response.statusCode !== 200 || !response.body.message){
                 throw new Error('Error getting properties from agent')
@@ -149,10 +149,10 @@ class Agent {
     }
 
     // getting properties
-    putProperties = async function (id, oid, pid, payload) {
+    putProperties = async function (id, oid, pid, payload, query) {
         console.log('Getting property as ID:' + id + " OID:"+ oid + ' PID:' + pid)
         try {
-            const response = await got.put('api/properties/' + id + '/' + oid + '/' + pid , {json: payload, ...this.requestOptions});
+            const response = await got.put('api/properties/' + id + '/' + oid + '/' + pid , {json: payload, ...this.requestOptions, searchParams: query}) 
             // console.log(response)
             if(response.statusCode !== 200 || !response.body.message){
                 throw new Error('Error getting properties from agent')
