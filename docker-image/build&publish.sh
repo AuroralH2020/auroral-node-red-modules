@@ -18,19 +18,11 @@ docker login ${REGISTRY}
 # Multiarch builder
 docker buildx use multiplatform
 
-# Build images & push to private registry
+# Build images & push to private registry + latest
 docker buildx build --platform ${PLATFORMS} \
                     --tag ${REGISTRY}/${IMAGE_NAME}:${ENV} \
-                    --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
-                    --build-arg BUILD_VERSION=${VERSION} \
-                    --build-arg NODE_VERSION=14 \
-                    --build-arg NODE_RED_VERSION=${NODE_RED_VERSION} \
-                    -f Dockerfile . --push
+                    --tag ${REGISTRY}/${IMAGE_NAME}:latest \
 
-# Now push latest...
-ENV=latest
-docker buildx build --platform ${PLATFORMS} \
-                    --tag ${REGISTRY}/${IMAGE_NAME}:${ENV} \
                     --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                     --build-arg BUILD_VERSION=${VERSION} \
                     --build-arg NODE_VERSION=14 \
