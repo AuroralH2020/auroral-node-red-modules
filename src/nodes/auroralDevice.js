@@ -26,19 +26,23 @@ module.exports = function(RED) {
             if(!(config.name && (typeof config.name == 'string' || config.name instanceof String))) {
                 throw new Error("TD.title missing")
             }
+            // AdapterID
+            if(!config.adapterId) {
+                throw new Error("AdapterID is  missing")
+            }
             // test subscribed events
             if(config.allowEventSubscription){
                 if(!Array.isArray(config.subscribedEvents)){
-                    throw new Error("Subscribed events needs to be array of {'oid':'', 'eid':''}")
+                    throw new Error("Subscribed events wrong format of {'oid':'', 'eid':''}")
                 }
                 config.subscribedEvents.forEach(event => {
                     if(!event.oid || !event.eid){
-                        throw new Error("Subscribed events needs to be array of {'oid':'', 'eid':''}")
+                        throw new Error("Subscribed events wrong format of {'oid':'', 'eid':''}")
                     }
                 });
             }
         } catch(err) {
-            node.status({ fill:"red", shape:"ring", text:"Wrong settings" });
+            node.status({ fill:"red", shape:"ring", text: err.message });
             node.error(err.message)
             return
         }

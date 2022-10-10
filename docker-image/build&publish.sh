@@ -22,7 +22,6 @@ docker buildx use multiplatform
 docker buildx build --platform ${PLATFORMS} \
                     --tag ${REGISTRY}/${IMAGE_NAME}:${ENV} \
                     --tag ${REGISTRY}/${IMAGE_NAME}:latest \
-
                     --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                     --build-arg BUILD_VERSION=${VERSION} \
                     --build-arg NODE_VERSION=14 \
