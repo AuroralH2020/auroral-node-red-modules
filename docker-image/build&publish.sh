@@ -1,9 +1,6 @@
 #!/bin/bash
 export NODE_RED_VERSION=$(grep -oE "\"node-red\": \"(\w*.\w*.\w*.\w*.\w*.)" package.json | cut -d\" -f4)
 
-echo "#########################################################################"
-echo "node-red version: ${NODE_RED_VERSION}"
-echo "#########################################################################"
 
 PLATFORMS=linux/amd64,linux/arm64,linux/arm/v7
 
@@ -25,6 +22,5 @@ docker buildx build --platform ${PLATFORMS} \
                     --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                     --build-arg BUILD_VERSION=${VERSION} \
                     --build-arg NODE_VERSION=14 \
-                    --build-arg NODE_RED_VERSION=${NODE_RED_VERSION} \
                     -f Dockerfile . --push
 

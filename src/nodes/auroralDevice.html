@@ -233,9 +233,7 @@
             // allow Event Subscription
             node.allowEventSubscription = $("#node-input-allowEventSubscription").is(":checked");
             try {
-                // alert('regtype: ' + node.regType)
                 if(node.regType !== 'preregistered') {
-                    // alert('Testing ouputs')
                     let tdJSON = JSON.parse(node.td)
                     tdJSON.adapterId = node.adapterId
                     node.td = JSON.stringify(tdJSON, null, 2)

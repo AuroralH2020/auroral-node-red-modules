@@ -19,7 +19,11 @@ module.exports = function(RED) {
                 if(auroral_requests[msg._auroralReqId] !== undefined) {
                     // send payload and end request
                     const res = auroral_requests[msg._auroralReqId].res
-                    res.writeHead(statusCode, {'Content-Type': 'application/json'});
+                    if(msg.timestamp) {
+                        res.writeHead(statusCode, {'Content-Type': 'application/json', 'x-timestamp': msg.timestamp });
+                    } else {
+                        res.writeHead(statusCode, {'Content-Type': 'application/json'});
+                    }
                     res.write(JSON.stringify(msg.payload));
                     res.end()
                 } else {

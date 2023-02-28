@@ -33,7 +33,20 @@
         <dd> Body of message</dd>
         <dt>msg.statusCode <span class="property-type">number</span></dt>
         <dd> HTTP status code for response. If not presented, default value is 200</dd>
+        <dt>msg.timestamp
+            <span class="property-type">string</span>
+        </dt>
+        <dd>
+            Timestamp YYYY-MM-DDThh:mm:ssZ
+        </dd>
     </dl>
     <h3>Details</h3>
-    Requested data should be in <code>msg.payload</code>. You are also able to specify HTTP status code in <code>msg.statusCode</code>. By default all messages are sent with status code 200
+    <h4> Payload</h4>
+    Requested data sent to other node
+    <h4> Status code</h4>
+    You can also specify HTTP status code in <code>msg.statusCode</code>. 
+     By default all messages are sent with status code: 200
+    <h4> Timestamp </h4>
+    <code>msg.timestamp</code> is sent back to AURORAL agent and is used in mapping creation process.
+     If not presented, default value is current timestamp.
 </script>
