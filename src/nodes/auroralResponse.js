@@ -19,11 +19,22 @@ module.exports = function(RED) {
                 if(auroral_requests[msg._auroralReqId] !== undefined) {
                     // send payload and end request
                     const res = auroral_requests[msg._auroralReqId].res
+                    let headers = {'Content-Type': 'application/json'}
                     if(msg.timestamp) {
-                        res.writeHead(statusCode, {'Content-Type': 'application/json', 'x-timestamp': msg.timestamp });
-                    } else {
-                        res.writeHead(statusCode, {'Content-Type': 'application/json'});
+                        headers['x-timestamp'] = msg.timestamp
                     }
+                    // Mapping handling 
+                    // msg has higher priority than config
+                    if(msg.mapping !== undefined) {
+                        headers['x-mapping'] = msg.mapping
+                    } else {
+                        if(config.mapping === "true") {
+                            headers['x-mapping'] = true
+                        } else if(config.mapping === "false") {
+                            headers['x-mapping'] = false
+                        }
+                    }
+                    res.writeHead(statusCode, headers);
                     res.write(JSON.stringify(msg.payload));
                     res.end()
                 } else {

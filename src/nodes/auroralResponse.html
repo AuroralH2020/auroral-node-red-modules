@@ -7,12 +7,28 @@
             name: { value: ""} ,
             agent: { value: "" },
             pids: { value: "PID1" },
+            mapping: { value: "unchanged" },
         },
         inputs:1,
         icon: "auroral.png",
         label: function() {
             return this.name || "auroralResponse";
-        }
+        },
+        oneditprepare: function () {
+            $("#node-input-mapping").typedInput({
+            types: [
+                    {
+                        value: "mapping",
+                        options: [
+                            { value: "unchanged", label: "Configured in node"},
+                            { value: "true", label: "True"},
+                            { value: "false", label: "False"},
+                        ]
+                    }
+                ]
+            })
+        },
+   
     });
 </script>
 
@@ -21,6 +37,9 @@
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="auroralResponse name">
     </div>
+    <div class="form-row">
+        <label for="node-input-mapping"><i class="fa fa-tag"></i> Mapping</label>
+        <input type="text" id="node-input-mapping" placeholder="AAA">
 </script>
 
 <script type="text/html" data-help-name="auroralResponse">
@@ -39,14 +58,23 @@
         <dd>
             Timestamp YYYY-MM-DDThh:mm:ssZ
         </dd>
+        <dt>msg.mapping
+            <span class="property-type">boolean</span>
+        </dt>
+        <dd>
+            Option to force mapping
+        </dd>
     </dl>
     <h3>Details</h3>
     <h4> Payload</h4>
     Requested data sent to other node
     <h4> Status code</h4>
     You can also specify HTTP status code in <code>msg.statusCode</code>. 
-     By default all messages are sent with status code: 200
+    By default all messages are sent with status code: 200
     <h4> Timestamp </h4>
     <code>msg.timestamp</code> is sent back to AURORAL agent and is used in mapping creation process.
      If not presented, default value is current timestamp.
+     <h4> Mapping </h4>
+    <code>msg.mapping</code> is option to override mapping settings in Auroral node. You can force it to be enabled, disabled or leave it as it is configured in Node. 
+    It can be configured in Response settings, or as msg option (higher priority)
 </script>

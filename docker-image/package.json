@@ -30,7 +30,7 @@
     ],
     "dependencies": {
         "node-red": "3.0.2",
-        "node-red-contrib-auroral": "~2.1.5",
+        "node-red-contrib-auroral": "~2.1.6",
         "node-red-dashboard": "~3.1.7"
     },
     "engines": {
