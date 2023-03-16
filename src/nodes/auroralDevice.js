@@ -128,7 +128,7 @@ module.exports = function(RED) {
                     }
                     // send event
                     try {
-                        await node.agentNode.agent.sendEventToChannel(node.oid, msg.eid, msg.payload)
+                        await node.agentNode.agent.sendEventToChannel(node.oid, msg.eid, msg.payload, { timestamp: msg.timestamp, mapping: msg.mapping })
                     } catch (error) {
                         node.error('ERROR:' + error)
                         done();

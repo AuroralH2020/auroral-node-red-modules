@@ -163,11 +163,21 @@ class Agent {
         }
     }
 
-    sendEventToChannel = async function (oid, eid, data) {
+    sendEventToChannel = async function (oid, eid, data, options) {
         console.log('Sending event to channel: ' + " OID:"+ oid + ' EID:' + eid + ' DATA: '+ data)
         try {
-            const response = await got.put('api/events/local/' + oid + '/' + eid , { json: JSON.stringify(data), ...this.requestOptionsText});
-            // console.log(response)
+            const headers = {
+                "Content-Type": "text/plain",
+            }
+            if(options.mapping !== undefined || options.mapping !== 'undefined'){
+                headers['x-mapping'] = options.mapping
+            }
+            console.log(options.timestamp)
+            if(options.timestamp && options.timestamp !== undefined){
+                console.log('setting timestamp')
+                headers['x-timestamp'] = options.timestamp
+            }
+            const response = await got.put('api/events/local/' + oid + '/' + eid , { body: JSON.stringify(data), ...this.requestOptionsText, headers: headers});
             if(response.statusCode !== 200){
                 throw new Error('Error sending event')
             }
