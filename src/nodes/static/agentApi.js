@@ -172,9 +172,7 @@ class Agent {
             if(options.mapping !== undefined || options.mapping !== 'undefined'){
                 headers['x-mapping'] = options.mapping
             }
-            console.log(options.timestamp)
             if(options.timestamp && options.timestamp !== undefined){
-                console.log('setting timestamp')
                 headers['x-timestamp'] = options.timestamp
             }
             const response = await got.put('api/events/local/' + oid + '/' + eid , { body: JSON.stringify(data), ...this.requestOptionsText, headers: headers});
