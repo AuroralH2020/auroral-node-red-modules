@@ -84,7 +84,7 @@ class Agent {
         console.log('getting thing')
         try {
             const response = await got.get('api/discovery/local/td/' + id, this.requestOptions);
-            console.log(response.body)
+            // console.log(response.body)
             if(response.statusCode !== 200){
                 throw new Error('Error getting TD from agent')
             }
