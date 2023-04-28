@@ -26,7 +26,8 @@ module.exports = function(RED) {
                     // Mapping handling 
                     // msg has higher priority than config
                     if(msg.mapping !== undefined) {
-                        headers['x-mapping'] = msg.mapping
+                        // -> boolean conversion
+                        headers['x-mapping'] = Boolean(msg.mapping)
                     } else {
                         if(config.mapping === "true") {
                             headers['x-mapping'] = true

@@ -1,3 +1,5 @@
+const config = require('./static/config');
+
 module.exports = function(RED) {
     function AuroralAgent(config) {
         RED.nodes.createNode(this,config);
@@ -301,16 +303,17 @@ function incomingServerRequest(req, res, node) {
                 var auroral_requests = (node.context().global).get('auroral_requests')
                 if(auroral_requests[reqId] !== undefined) {
                     // request was not answered
-                    node.error('Auroral node-red ' + targetDevice.name + '-' + reqPid + ' does not reach response node in 5 seconds')
+                    node.error('Auroral node-red ' + targetDevice.name + '-' + reqPid + ' does not reach response node in given time')
                     const res = auroral_requests[reqId].res
-                    res.writeHead(400, {'Content-Type': 'application/json'});
-                    res.write(JSON.stringify({err: 'Auroral node-red ' + targetDevice.name + ' pid: ' + reqPid + ' does not reach response node in 5 seconds'}));
+                    // Send timeout
+                    res.writeHead(408, {'Content-Type': 'application/json'});
+                    res.write(JSON.stringify({err: 'Auroral node-red ' + targetDevice.name + ' pid: ' + reqPid + ' does not reach response node in given time'}));
                     res.end()
                     // remove from global variable
                     delete auroral_requests[reqId];
                     (node.context().global).set('auroral_requests', auroral_requests)
                 } 
-            }, 5000)
+            }, config.localTimeout)
         } else {
             res.writeHead(400, {'Content-Type': 'application/json'});
             res.end();
