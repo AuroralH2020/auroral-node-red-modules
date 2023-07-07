@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-auroral",
-    "version": "2.1.9",
+    "version": "2.1.10",
     "description": "Nodes for contributing to AURORAL network",
     "repository": {
         "type": "git",
